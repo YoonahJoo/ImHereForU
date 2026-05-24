@@ -1,0 +1,32 @@
+.mode-toggle {
+  display: flex;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 20px;
+  padding: 4px;
+}
+
+.mode-btn {
+  border: none;
+  border-radius: 16px;
+  padding: 4px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  background: transparent;
+  color: #a87090;
+  transition: background 0.22s ease, color 0.22s ease, box-shadow 0.22s ease, transform 0.15s ease;
+  outline: none;
+}
+
+.mode-btn:hover {
+  background: rgba(201, 132, 158, 0.18);
+}
+
+.mode-btn.active {
+  background: #c9849e;
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(201, 132, 158, 0.45);
+  transform: scale(1.03);
+}

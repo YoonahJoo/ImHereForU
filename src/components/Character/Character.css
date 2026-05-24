@@ -1,0 +1,62 @@
+/* ── Wrapper: absolute, centered in room-stage ── */
+.character-wrapper {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* transform set via inline style: translate(calc(-50% + Xpx), calc(-50% + Ypx)) */
+  cursor: pointer;
+  z-index: 10;
+  user-select: none;
+}
+
+.character-wrapper.is-dragging {
+  cursor: grabbing;
+}
+
+/* ── Inner: handles float animation ── */
+.character-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 더 자연스러운 float — cubic-bezier로 완급 조정 */
+.character-inner.float {
+  animation: float 3.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  45%       { transform: translateY(-10px); }
+  55%       { transform: translateY(-9px); }
+}
+
+/* ── Emoji ── */
+.character-emoji {
+  font-size: 72px;
+  line-height: 1;
+  position: relative;
+  display: block;
+  transition: transform 0.18s ease;
+}
+
+/* Hover: 살짝 scale up (드래그 중이거나 눌렸을 때는 제외) */
+.character-wrapper:not(.is-dragging):not(.is-pressed):hover .character-emoji {
+  transform: scale(1.08);
+}
+
+/* Press scale — on emoji so it doesn't conflict with float on inner */
+.character-wrapper.is-pressed .character-emoji {
+  transform: scale(0.88);
+}
+
+/* ── Focus overlay ── */
+.focus-overlay {
+  position: absolute;
+  top: -10px;
+  right: -16px;
+  font-size: 28px;
+  line-height: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.12));
+}
