@@ -15,7 +15,7 @@ import {
   completeMessages,
   focusCheeringMessages,
   focusCuriousMessages,
-  sulkyDailyHoldMessage,
+  sulkyMessages,
   sulkyDailyReleaseMessage,
   sulkyFocusModeHoldMessage,
   sulkyFocusModeReleaseMessage,
@@ -248,7 +248,7 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
     if (exprTimer.current) clearTimeout(exprTimer.current)
     if (mode === 'daily') {
       setExpression('sulky_daily_mode')
-      showBubble(sulkyDailyHoldMessage)
+      showBubble(getRandomMessage(sulkyMessages).text)
     } else {
       setExpression('sulky_focus_mode')
       showBubble(sulkyFocusModeHoldMessage)

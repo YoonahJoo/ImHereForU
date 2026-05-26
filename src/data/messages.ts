@@ -10,8 +10,8 @@ import type { Message, TimeOfDay } from '../types'
 // ────────────────────────────────────────────────────────────
 
 export const dailyMessages: Message[] = [
-  { id: 'd1', text: 'I miss you babe 🥺', type: 'daily' },
-  { id: 'd2', text: "Don't forget to get some sleep 🌙", type: 'daily' },
+  { id: 'd1', text: 'I miss you babeee', type: 'daily' },
+  { id: 'd2', text: "I wonder whats your plan for today", type: 'daily' },
   { id: 'd3', text: 'Mini Yoonah is watching you!', type: 'daily' },
   { id: 'd4', text: "I'd be happy if you text me!", type: 'daily' },
   { id: 'd5', text: "You're amazing!", type: 'daily' },
