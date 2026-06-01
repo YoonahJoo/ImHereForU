@@ -143,3 +143,80 @@
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* ── Dark theme placeholder ── */
+.yoonah-room.theme-dark {
+  background: linear-gradient(155deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+}
+
+.yoonah-room.theme-dark .settings-btn {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.yoonah-room.theme-dark .settings-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.yoonah-room.theme-dark .gift-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(180, 140, 200, 0.3);
+  color: #c8a8d8;
+}
+
+.yoonah-room.theme-dark .gift-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.yoonah-room.theme-dark .character-hint {
+  color: rgba(200, 180, 210, 0.55);
+}
+
+/* ── Daily / Focus 토글 ── */
+.yoonah-room.theme-dark .mode-toggle {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.yoonah-room.theme-dark .mode-btn {
+  color: #c8a8d8;
+}
+
+.yoonah-room.theme-dark .mode-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.yoonah-room.theme-dark .mode-btn.active {
+  background: #5a3a6e;
+  color: #e8c8f8;
+  box-shadow: 0 2px 10px rgba(90, 58, 110, 0.5);
+}
+
+/* ── Gift Room 버튼 ── */
+.yoonah-room.theme-dark .gift-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* ── Focus 타이머 ── */
+.yoonah-room.theme-dark .focus-timer {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(180, 140, 200, 0.2);
+}
+
+.yoonah-room.theme-dark .timer-display {
+  color: #c8a8d8;
+}
+
+.yoonah-room.theme-dark .timer-btn {
+  background: #5a3a6e;
+}
+
+.yoonah-room.theme-dark .timer-btn:hover {
+  background: #7a4a8e;
+}
+
+.yoonah-room.theme-dark .timer-btn--reset {
+  background: rgba(80, 50, 120, 0.5);
+}
+
+.yoonah-room.theme-dark .timer-btn--reset:hover {
+  background: rgba(100, 70, 150, 0.7);
+}

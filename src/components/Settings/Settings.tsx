@@ -6,13 +6,16 @@ interface SettingsProps {
   settings: UserSettings
   onSave: (settings: UserSettings) => void
   onClose: () => void
+  currentTheme: 'light' | 'dark'
+  onThemePreview: (theme: 'light' | 'dark') => void
 }
 
-export function Settings({ settings, onSave, onClose }: SettingsProps) {
+export function Settings({ settings, onSave, onClose, currentTheme, onThemePreview }: SettingsProps) {
   const [userName, setUserName] = useState(settings.userName)
   const [partnerNickname, setPartnerNickname] = useState(settings.partnerNickname)
   const [customMessages, setCustomMessages] = useState<string[]>(settings.customMessages)
   const [defaultMode, setDefaultMode] = useState<AppMode>(settings.defaultMode)
+  const [theme, setTheme] = useState<'light' | 'dark'>(settings.theme)
   const [newMessage, setNewMessage] = useState('')
 
   function addMessage() {
@@ -31,12 +34,11 @@ export function Settings({ settings, onSave, onClose }: SettingsProps) {
   }
 
   function handleSave() {
-    onSave({ userName, partnerNickname, customMessages, defaultMode })
-    onClose()
+    onSave({ userName, partnerNickname, customMessages, defaultMode, theme })
   }
 
   return (
-    <div className="settings-panel">
+    <div className={`settings-panel${currentTheme === 'dark' ? ' theme-dark' : ''}`}>
       <div className="settings-header">
         <h2 className="settings-title">⚙️ Settings</h2>
         <button className="settings-close" onClick={onClose} aria-label="Close">✕</button>
@@ -77,6 +79,26 @@ export function Settings({ settings, onSave, onClose }: SettingsProps) {
               onClick={() => setDefaultMode('focus')}
             >
               Focus
+            </button>
+          </div>
+        </div>
+
+        <div className="settings-field">
+          <label className="settings-label">Theme</label>
+          <div className="settings-mode-toggle">
+            <button
+              type="button"
+              className={`settings-mode-btn${theme === 'light' ? ' active' : ''}`}
+              onClick={() => { setTheme('light'); onThemePreview('light') }}
+            >
+              Light
+            </button>
+            <button
+              type="button"
+              className={`settings-mode-btn${theme === 'dark' ? ' active' : ''}`}
+              onClick={() => { setTheme('dark'); onThemePreview('dark') }}
+            >
+              Dark
             </button>
           </div>
         </div>

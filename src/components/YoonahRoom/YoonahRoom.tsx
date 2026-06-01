@@ -36,6 +36,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   partnerNickname: 'Yoonah',
   customMessages: [],
   defaultMode: 'daily',
+  theme: 'light',
 }
 
 interface YoonahRoomProps {
@@ -56,7 +57,10 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
   const [isGiftRoomOpen, setIsGiftRoomOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [settings, setSettings] = useState<UserSettings>(
-    () => loadSettings() ?? DEFAULT_SETTINGS
+    () => ({ ...DEFAULT_SETTINGS, ...loadSettings() })
+  )
+  const [previewTheme, setPreviewTheme] = useState<'light' | 'dark'>(
+    () => loadSettings()?.theme ?? 'light'
   )
   const [charOffset, setCharOffset] = useState({ x: 0, y: 0 })
 
@@ -177,7 +181,9 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
   // ── Settings 저장 ─────────────────────────────────────────
   function handleSaveSettings(newSettings: UserSettings) {
     setSettings(newSettings)
+    setPreviewTheme(newSettings.theme)
     saveSettings(newSettings)
+    setIsSettingsOpen(false)
     if (newSettings.defaultMode !== mode) {
       onModeChange(newSettings.defaultMode)
     }
@@ -269,14 +275,14 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
   }
 
   return (
-    <div className="yoonah-room">
+    <div className={`yoonah-room theme-${previewTheme}`}>
       {/* 상단 */}
       <div className="room-top">
         <ModeToggle mode={mode} onModeChange={handleModeChange} />
         <button
           className="settings-btn"
           aria-label="Settings"
-          onClick={() => { setIsGiftRoomOpen(false); setIsSettingsOpen(true) }}
+          onClick={() => { setIsGiftRoomOpen(false); setIsSettingsOpen(true); setPreviewTheme(settings.theme) }}
         >
           ⚙️
         </button>
@@ -337,13 +343,15 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
 
       {/* 오버레이 패널 */}
       {isGiftRoomOpen && (
-        <GiftRoom gifts={gifts} onClose={() => setIsGiftRoomOpen(false)} />
+        <GiftRoom gifts={gifts} onClose={() => setIsGiftRoomOpen(false)} theme={previewTheme} />
       )}
       {isSettingsOpen && (
         <Settings
           settings={settings}
           onSave={handleSaveSettings}
-          onClose={() => setIsSettingsOpen(false)}
+          onClose={() => { setIsSettingsOpen(false); setPreviewTheme(settings.theme) }}
+          currentTheme={previewTheme}
+          onThemePreview={setPreviewTheme}
         />
       )}
     </div>

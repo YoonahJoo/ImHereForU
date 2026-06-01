@@ -4,6 +4,7 @@ import './GiftRoom.css'
 interface GiftRoomProps {
   gifts: GiftItem[]
   onClose: () => void
+  theme: 'light' | 'dark'
 }
 
 function formatDate(isoString: string): string {
@@ -16,9 +17,9 @@ function formatDate(isoString: string): string {
   return `${yyyy}-${mm}-${dd} ${hh}:${min}`
 }
 
-export function GiftRoom({ gifts, onClose }: GiftRoomProps) {
+export function GiftRoom({ gifts, onClose, theme }: GiftRoomProps) {
   return (
-    <div className="gift-room">
+    <div className={`gift-room${theme === 'dark' ? ' theme-dark' : ''}`}>
       <div className="gift-room-header">
         <h2 className="gift-room-title">🎁 Gift Room</h2>
         <button className="gift-room-close" onClick={onClose} aria-label="Close">✕</button>

@@ -88,6 +88,7 @@ export interface UserSettings {
   partnerNickname: string    // 기본값: "Yoonah"
   customMessages: string[]   // 사용자가 직접 추가한 말풍선 문구
   defaultMode: AppMode       // 기본값: "daily"
+  theme: 'light' | 'dark'   // 기본값: "light"
 }
 
 // ────────────────────────────────────────────────────────────

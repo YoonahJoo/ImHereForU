@@ -127,3 +127,53 @@
   font-size: 9px;
   color: #c0a0b0;
 }
+
+/* ── Dark theme ── */
+.gift-room.theme-dark {
+  background: linear-gradient(160deg, #1a1a2e 0%, #16213e 55%, #0f3460 100%);
+}
+
+.gift-room.theme-dark .gift-room-title {
+  color: #c8a8d8;
+}
+
+.gift-room.theme-dark .gift-room-close {
+  background: rgba(255, 255, 255, 0.1);
+  color: #c8a8d8;
+}
+
+.gift-room.theme-dark .gift-room-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.gift-room.theme-dark .gift-room-count {
+  color: #9878a8;
+}
+
+.gift-room.theme-dark .gift-room-empty {
+  color: #9878a8;
+}
+
+.gift-room.theme-dark .gift-card {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(180, 140, 200, 0.2);
+}
+
+.gift-room.theme-dark .gift-card--uncommon {
+  border-color: rgba(160, 120, 220, 0.35);
+  background: rgba(80, 50, 120, 0.3);
+}
+
+.gift-room.theme-dark .gift-card--rare {
+  border-color: rgba(220, 130, 175, 0.45);
+  background: rgba(100, 40, 80, 0.35);
+  box-shadow: 0 2px 10px rgba(180, 80, 130, 0.2);
+}
+
+.gift-room.theme-dark .gift-name {
+  color: #c8a8d8;
+}
+
+.gift-room.theme-dark .gift-date {
+  color: #9878a8;
+}

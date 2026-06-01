@@ -225,3 +225,85 @@
   background: #a87090;
   transform: scale(1.02);
 }
+
+/* ── Dark theme ── */
+.settings-panel.theme-dark {
+  background: linear-gradient(160deg, #1a1a2e 0%, #16213e 55%, #0f3460 100%);
+}
+
+.settings-panel.theme-dark .settings-title {
+  color: #c8a8d8;
+}
+
+.settings-panel.theme-dark .settings-close {
+  background: rgba(255, 255, 255, 0.1);
+  color: #c8a8d8;
+}
+
+.settings-panel.theme-dark .settings-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.settings-panel.theme-dark .settings-label {
+  color: #9888a8;
+}
+
+.settings-panel.theme-dark .settings-input {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(180, 140, 200, 0.3);
+  color: #d8b8e8;
+}
+
+.settings-panel.theme-dark .settings-input:focus {
+  border-color: rgba(180, 140, 200, 0.7);
+}
+
+.settings-panel.theme-dark .settings-input::placeholder {
+  color: rgba(200, 168, 216, 0.4);
+}
+
+.settings-panel.theme-dark .settings-mode-toggle {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.settings-panel.theme-dark .settings-mode-btn {
+  color: #c8a8d8;
+}
+
+.settings-panel.theme-dark .settings-mode-btn.active {
+  background: #5a3a6e;
+  color: #e8c8f8;
+}
+
+.settings-panel.theme-dark .settings-add-btn {
+  background: #5a3a6e;
+}
+
+.settings-panel.theme-dark .settings-add-btn:hover {
+  background: #7a4a8e;
+}
+
+.settings-panel.theme-dark .custom-message-item {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(180, 140, 200, 0.2);
+}
+
+.settings-panel.theme-dark .custom-message-text {
+  color: #c8a8d8;
+}
+
+.settings-panel.theme-dark .custom-message-delete {
+  color: #9878a8;
+}
+
+.settings-panel.theme-dark .custom-message-delete:hover {
+  color: #c8a8d8;
+}
+
+.settings-panel.theme-dark .settings-save-btn {
+  background: #5a3a6e;
+}
+
+.settings-panel.theme-dark .settings-save-btn:hover {
+  background: #7a4a8e;
+}
