@@ -46,7 +46,7 @@ export function Settings({ settings, onSave, onClose, currentTheme, onThemePrevi
 
       <div className="settings-body">
         <div className="settings-field">
-          <label className="settings-label">My Name</label>
+          <label className="settings-label">Your Name</label>
           <input
             className="settings-input"
             value={userName}

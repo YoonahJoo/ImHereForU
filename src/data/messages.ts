@@ -10,12 +10,12 @@ import type { Message, TimeOfDay } from '../types'
 // ────────────────────────────────────────────────────────────
 
 export const dailyMessages: Message[] = [
-  { id: 'd1', text: 'I miss you babeee', type: 'daily' },
-  { id: 'd2', text: "I wonder whats your plan for today", type: 'daily' },
-  { id: 'd3', text: 'Mini Yoonah is watching you!', type: 'daily' },
+  { id: 'd1', text: 'I miss you babe', type: 'daily' },
+  { id: 'd2', text: "I wonder whatcha doing now!", type: 'daily' },
+  { id: 'd3', text: "You're sooooo cute ", type: 'daily' },
   { id: 'd4', text: "I'd be happy if you text me!", type: 'daily' },
-  { id: 'd5', text: "You're amazing!", type: 'daily' },
-  { id: 'd6', text: "I'm tiny but I love you big.", type: 'daily' },
+  { id: 'd5', text: "You have no idea how much I love you", type: 'daily' },
+  { id: 'd6', text: "I'm tiny,, but I love you big!.", type: 'daily' },
 ]
 
 // ────────────────────────────────────────────────────────────
@@ -25,7 +25,7 @@ export const dailyMessages: Message[] = [
 export const timeBasedMessages: Record<TimeOfDay, Message> = {
   morning: {
     id: 'tb-morning',
-    text: 'Good morninggg☀️',
+    text: 'Good morninggg☀️ how did you sleep?',
     type: 'time-based',
   },
   afternoon: {
@@ -35,17 +35,17 @@ export const timeBasedMessages: Record<TimeOfDay, Message> = {
   },
   evening: {
     id: 'tb-evening',
-    text: 'Good evening!',
+    text: "Good evening! how's your day going?",
     type: 'time-based',
   },
   night: {
     id: 'tb-night',
-    text: 'Time to go to sleep babe!',
+    text: "It's night time babe",
     type: 'time-based',
   },
   dawn: {
     id: 'tb-dawn',
-    text: 'BABE YOU SHOULD SLEEP!!!!',
+    text: "Hey babe, it's pretty late to work tho. Aren't you sleepy?",
     type: 'time-based',
   },
 }
@@ -55,9 +55,9 @@ export const timeBasedMessages: Record<TimeOfDay, Message> = {
 // ────────────────────────────────────────────────────────────
 
 export const sulkyMessages: Message[] = [
-  { id: 's1', text: 'Let me goooo😭', type: 'sulky' },
-  { id: 's2', text: 'Where am I going???', type: 'sulky' },
-  { id: 's3', text: 'Ahhhhhh Im dizzy', type: 'sulky' },
+  { id: 's1', text: 'Let me goooo', type: 'sulky' },
+  { id: 's2', text: 'aww you love me so much huh?', type: 'sulky' },
+  { id: 's3', text: 'Babeee Im dizzy', type: 'sulky' },
 ]
 
 // ────────────────────────────────────────────────────────────
@@ -73,16 +73,16 @@ export const sulkyFocusModeReleaseMessage = 'you got this!! almost there!!'
 // C-3. 방치 감지 웨이크업 메시지
 // ────────────────────────────────────────────────────────────
 
-export const idleWakePromptMessage = 'click me if you wanna wake me up!'
-export const idleWakeResponseMessage = 'hehe!'
+export const idleWakePromptMessage = 'click me if you wanna wake me up'
+export const idleWakeResponseMessage = 'hehe I missed u'
 
 // ────────────────────────────────────────────────────────────
 // D. 방치 상태 말풍선 (15분 이상 인터랙션 없음)
 // ────────────────────────────────────────────────────────────
 
 export const idleMessages: Message[] = [
-  { id: 'i1', text: 'I need attention babe..😢', type: 'idle' },
-  { id: 'i2', text: "Helloooo? I'm here???", type: 'idle' },
+  { id: 'i1', text: 'Hmm I need attention..', type: 'idle' },
+  { id: 'i2', text: "Helloooo? Are you there?", type: 'idle' },
 ]
 
 // ────────────────────────────────────────────────────────────
@@ -90,12 +90,12 @@ export const idleMessages: Message[] = [
 // ────────────────────────────────────────────────────────────
 
 export const focusMessages: Message[] = [
-  { id: 'f1', text: 'Yoonah is watching you. Focus on!', type: 'focus' },
+  { id: 'f1', text: "I'm watching you, lock in!", type: 'focus' },
   { id: 'f2', text: 'No doom scrolling 👀', type: 'focus' },
-  { id: 'f3', text: "You're doing good, babe.", type: 'focus' },
-  { id: 'f4', text: 'Stay with it for a lit bit more.', type: 'focus' },
+  { id: 'f3', text: "You're doing great, babe.", type: 'focus' },
+  { id: 'f4', text: "aww hard working babe, I'm in love again", type: 'focus' },
   { id: 'f5', text: "Almost there! Don't give up.", type: 'focus' },
-  { id: 'f6', text: 'You got this!', type: 'focus' },
+  { id: 'f6', text: "You've got this!", type: 'focus' },
 ]
 
 // ────────────────────────────────────────────────────────────
@@ -105,11 +105,11 @@ export const focusMessages: Message[] = [
 export const completeMessages: Message[] = [
   {
     id: 'c1',
-    text: 'You did a great job! Wanna get some rest, babe? 🥰',
+    text: 'You did a great job, sweet heart <3',
     type: 'complete',
   },
-  { id: 'c2', text: "I'm so proud of you 🥰", type: 'complete' },
-  { id: 'c3', text: "You're amazing Take some break, babe 🥰", type: 'complete' },
+  { id: 'c2', text: "You made it! I'm soooo proud of you <3", type: 'complete' },
+  { id: 'c3', text: "You're amazing, wanna give you a big hug <3", type: 'complete' },
 ]
 
 // ────────────────────────────────────────────────────────────
