@@ -35,7 +35,12 @@ import sunflower from '../../assets/sunflower.png'
 import bouquet from '../../assets/bouquet.png'
 import memo from '../../assets/memo.png'
 import settingsBtn from '../../assets/settings.png'
-import explainLight from '../../assets/explain-light.png'
+import explainLight1 from '../../assets/explain-light-1.png'
+import explainLight2 from '../../assets/explain-light-2.png'
+import explainLight3 from '../../assets/explain-light-3.png'
+import explainDark1 from '../../assets/explain-dark-1.png'
+import explainDark2 from '../../assets/explain-dark-2.png'
+import explainDark3 from '../../assets/explain-dark-3.png'
 import frogExitBtn from '../../assets/frog-exit-button.png'
 import './YoonahRoom.css'
 
@@ -66,6 +71,7 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
   const [isGiftRoomOpen, setIsGiftRoomOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false)
+  const [onboardingPage, setOnboardingPage] = useState(0)
   const [settings, setSettings] = useState<UserSettings>(
     () => ({ ...DEFAULT_SETTINGS, ...loadSettings() })
   )
@@ -384,7 +390,7 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
         src={bouquet}
         alt="app guide"
         draggable={false}
-        onClick={() => { setIsGiftRoomOpen(false); setIsSettingsOpen(false); setIsOnboardingOpen(true) }}
+        onClick={() => { setIsGiftRoomOpen(false); setIsSettingsOpen(false); setOnboardingPage(0); setIsOnboardingOpen(true) }}
       />
 
       {/* 클릭 에셋: 메모 → gift room */}
@@ -412,7 +418,11 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
           mode={mode}
           expression={expression}
           isTimerRunning={timerStatus === 'running'}
-          onExpressionChange={setExpression}
+          onExpressionChange={(expr) => {
+            if (expr === 'dragging_daily_mode') showBubble('where am I going?')
+            else if (expr === 'dragging_focus_mode') showBubble('Oops!')
+            setExpression(expr)
+          }}
           onClick={handleClick}
           onDoubleClick={handleDoubleClick}
           onLongPress={handleLongPress}
@@ -466,37 +476,73 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
       )}
 
       {/* 온보딩 오버레이 */}
-      {isOnboardingOpen && (
-        <div className="onboarding-backdrop" onClick={() => setIsOnboardingOpen(false)}>
-          <img
-            className="onboarding-img"
-            src={explainLight}
-            alt="app guide"
-            draggable={false}
-            onClick={(e) => e.stopPropagation()}
-          />
-          <img
-            className="onboarding-frog-btn"
-            src={frogExitBtn}
-            alt="close"
-            draggable={false}
-            onClick={(e) => { e.stopPropagation(); setIsOnboardingOpen(false) }}
-          />
-        </div>
-      )}
+      {isOnboardingOpen && (() => {
+        const lightImgs = [explainLight1, explainLight2, explainLight3]
+        const darkImgs  = [explainDark1, explainDark2, explainDark3]
+        const imgs = previewTheme === 'dark' ? darkImgs : lightImgs
+        return (
+          <div className="onboarding-backdrop" onClick={() => setIsOnboardingOpen(false)}>
+            <img
+              className="onboarding-img"
+              src={imgs[onboardingPage]}
+              alt={`app guide ${onboardingPage + 1}`}
+              draggable={false}
+              onClick={(e) => e.stopPropagation()}
+            />
+            {onboardingPage > 0 && (
+              <button
+                className="onboarding-arrow onboarding-arrow--left"
+                onClick={(e) => { e.stopPropagation(); setOnboardingPage(p => p - 1) }}
+                aria-label="이전"
+              >‹</button>
+            )}
+            {onboardingPage < imgs.length - 1 && (
+              <button
+                className="onboarding-arrow onboarding-arrow--right"
+                onClick={(e) => { e.stopPropagation(); setOnboardingPage(p => p + 1) }}
+                aria-label="다음"
+              >›</button>
+            )}
+            <div className="onboarding-dots" onClick={(e) => e.stopPropagation()}>
+              {imgs.map((_, i) => (
+                <span
+                  key={i}
+                  className={`onboarding-dot ${i === onboardingPage ? 'onboarding-dot--active' : ''}`}
+                  onClick={(e) => { e.stopPropagation(); setOnboardingPage(i) }}
+                />
+              ))}
+            </div>
+            <img
+              className="onboarding-frog-btn"
+              src={frogExitBtn}
+              alt="close"
+              draggable={false}
+              onClick={(e) => { e.stopPropagation(); setIsOnboardingOpen(false) }}
+            />
+          </div>
+        )
+      })()}
 
       {/* 오버레이 패널 */}
       {isGiftRoomOpen && (
-        <GiftRoom gifts={gifts} onClose={() => setIsGiftRoomOpen(false)} theme={previewTheme} />
+        <div className="panel-backdrop" onClick={() => setIsGiftRoomOpen(false)}>
+          <div onClick={(e) => e.stopPropagation()}>
+            <GiftRoom gifts={gifts} onClose={() => setIsGiftRoomOpen(false)} theme={previewTheme} />
+          </div>
+        </div>
       )}
       {isSettingsOpen && (
-        <Settings
-          settings={settings}
-          onSave={handleSaveSettings}
-          onClose={() => { setIsSettingsOpen(false); setPreviewTheme(settings.theme) }}
-          currentTheme={previewTheme}
-          onThemePreview={setPreviewTheme}
-        />
+        <div className="panel-backdrop" onClick={() => { setIsSettingsOpen(false); setPreviewTheme(settings.theme) }}>
+          <div onClick={(e) => e.stopPropagation()}>
+            <Settings
+              settings={settings}
+              onSave={handleSaveSettings}
+              onClose={() => { setIsSettingsOpen(false); setPreviewTheme(settings.theme) }}
+              currentTheme={previewTheme}
+              onThemePreview={setPreviewTheme}
+            />
+          </div>
+        </div>
       )}
     </div>
   )

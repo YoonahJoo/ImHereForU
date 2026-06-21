@@ -182,6 +182,50 @@
   background: rgba(255, 255, 255, 0.9);
 }
 
+/* ── 타이머 창 dark mode ── */
+.theme-dark .focus-timer-window {
+  background: rgba(46, 26, 13, 0.97);
+  border-color: rgba(180, 130, 80, 0.35);
+}
+
+.theme-dark .focus-timer-window-title {
+  color: #d4b896;
+}
+
+.theme-dark .focus-timer-window-close {
+  background: rgba(255, 255, 255, 0.08);
+  color: #d4b896;
+}
+
+.theme-dark .focus-timer-window-close:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.theme-dark .focus-timer {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(180, 130, 80, 0.35);
+}
+
+.theme-dark .timer-display {
+  color: #d4b896;
+}
+
+.theme-dark .timer-btn {
+  background: #a07848;
+}
+
+.theme-dark .timer-btn:hover {
+  background: #c09060;
+}
+
+.theme-dark .timer-btn--reset {
+  background: rgba(180, 130, 80, 0.25);
+}
+
+.theme-dark .timer-btn--reset:hover {
+  background: rgba(180, 130, 80, 0.5);
+}
+
 /* ── 캐릭터 힌트 텍스트 ── */
 .character-hint {
   position: absolute;
@@ -270,6 +314,60 @@
   cursor: default;
 }
 
+.onboarding-arrow {
+  position: absolute;
+  top: calc(96px + 447px / 2);
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.75);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 22px;
+  line-height: 1;
+  color: #8a7560;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-app-region: no-drag;
+  transition: background 0.15s, transform 0.15s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.onboarding-arrow:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.onboarding-arrow--left  { left: 92px; }
+.onboarding-arrow--right { left: 771px; }
+
+.onboarding-dots {
+  position: absolute;
+  left: 136px;
+  top: calc(96px + 447px + 12px);
+  width: 627px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  -webkit-app-region: no-drag;
+}
+
+.onboarding-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.onboarding-dot--active {
+  background: rgba(255, 255, 255, 0.92);
+  transform: scale(1.3);
+}
+
 .onboarding-frog-btn {
   position: absolute;
   left: 672px;
@@ -291,4 +389,17 @@
 @keyframes panel-in {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── 패널 백드롭 (GiftRoom / Settings 공통) ── */
+.panel-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 99;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

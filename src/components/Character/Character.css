@@ -38,7 +38,8 @@
 }
 
 .character-wrapper.is-dragging .character-inner {
-  transform: rotate(5deg);
+  animation: pendulum 0.6s ease-in-out infinite;
+  transition: none;
 }
 
 /* ── Image wrapper: crossfade container ── */
@@ -126,4 +127,9 @@
   40%       { transform: translateX(4px); }
   60%       { transform: translateX(-3px); }
   80%       { transform: translateX(3px); }
+}
+
+@keyframes pendulum {
+  0%, 100% { transform: rotate(-12deg); }
+  50%       { transform: rotate(12deg); }
 }
