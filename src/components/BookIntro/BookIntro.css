@@ -1,0 +1,57 @@
+.book-intro {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.book-flip-wrapper {
+  perspective: 1200px;
+  width: 100%;
+  height: 100%;
+}
+
+.book-flip {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  opacity: 0;
+  animation: fadeInBook 0.8s ease-out forwards, flipOpen 1.2s ease-in-out 1.5s forwards;
+}
+
+.book-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 4px 12px 12px 4px;
+  overflow: hidden;
+  box-shadow: -4px 4px 20px rgba(0, 0, 0, 0.6);
+}
+
+.book-face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.book-face-front {
+  transform: rotateY(0deg);
+}
+
+.book-face-back {
+  transform: rotateY(-180deg);
+}
+
+@keyframes fadeInBook {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes flipOpen {
+  0%   { transform: rotateY(0deg); }
+  100% { transform: rotateY(-180deg); }
+}

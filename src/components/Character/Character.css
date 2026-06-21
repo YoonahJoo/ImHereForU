@@ -7,6 +7,7 @@
   cursor: pointer;
   z-index: 10;
   user-select: none;
+  -webkit-app-region: no-drag;
 }
 
 .character-wrapper.is-dragging {
@@ -15,9 +16,27 @@
 
 /* ── Inner: handles float animation ── */
 .character-inner {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.character-img {
+  width: 180px;
+  height: auto;
+  display: block;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+.character-expression {
+  position: absolute;
+  top: -8px;
+  right: -12px;
+  font-size: 22px;
+  line-height: 1;
+  pointer-events: none;
 }
 
 /* 더 자연스러운 float — cubic-bezier로 완급 조정 */

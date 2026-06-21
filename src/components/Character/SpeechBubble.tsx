@@ -34,7 +34,7 @@ export function SpeechBubble({ message, visible, offsetX = 0, offsetY = 0 }: Spe
       className={`speech-bubble${isShown ? ' speech-bubble--visible' : ''}`}
       style={{
         left: `calc(50% + ${offsetX}px)`,
-        bottom: `calc(50% + 54px - ${offsetY}px)`,
+        bottom: `calc(50% + 90px - ${offsetY}px)`,
       }}
     >
       {message}

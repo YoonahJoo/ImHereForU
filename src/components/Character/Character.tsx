@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import type { AppMode, Expression } from '../../types'
+import characterImg from '../../assets/character/yoonah.png'
 import './Character.css'
 
 const EMOJI: Record<Expression, string> = {
@@ -185,7 +186,8 @@ export function Character({
       onMouseDown={handleMouseDown}
     >
       <div className={`character-inner${isFloat ? ' float' : ''}`}>
-        <span className="character-emoji">
+        <img src={characterImg} className="character-img" alt="character" draggable={false} />
+        <span className="character-expression">
           {EMOJI[expression]}
           {isFocus && <span className="focus-overlay">📚</span>}
         </span>

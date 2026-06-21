@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
@@ -17,9 +17,15 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
 let win: BrowserWindow | null
 
 function createWindow() {
+  ipcMain.on('resize-window', (_, { width, height }: { width: number; height: number }) => {
+    if (win) win.setSize(width, height)
+  })
+
   win = new BrowserWindow({
-    width: 400,
-    height: 500,
+    width: 500,
+    height: 750,
+    transparent: true,
+    frame: false,
     resizable: false,
     icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
     title: 'Mini Yoonah',

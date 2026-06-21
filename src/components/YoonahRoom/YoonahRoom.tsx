@@ -29,6 +29,14 @@ import { useFocusTimer } from '../../hooks/useFocusTimer'
 import { getTimeOfDay } from '../../utils/timeUtils'
 import { createGiftItem } from '../../data/gifts'
 import { saveGifts, loadGifts, saveSettings, loadSettings } from '../../utils/storage'
+import bookLight from '../../assets/book-light.png'
+import bookDark from '../../assets/book-dark.png'
+import sunflower from '../../assets/sunflower.png'
+import bouquet from '../../assets/bouquet.png'
+import memo from '../../assets/memo.png'
+import settingsBtn from '../../assets/settings.png'
+import explainLight from '../../assets/explain-light.png'
+import frogExitBtn from '../../assets/frog-exit-button.png'
 import './YoonahRoom.css'
 
 const DEFAULT_SETTINGS: UserSettings = {
@@ -56,6 +64,7 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
   const [newGift, setNewGift] = useState<GiftItem | null>(null)
   const [isGiftRoomOpen, setIsGiftRoomOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false)
   const [settings, setSettings] = useState<UserSettings>(
     () => ({ ...DEFAULT_SETTINGS, ...loadSettings() })
   )
@@ -69,7 +78,8 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
   const newGiftTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const modeBlockTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const cheeringReturnTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const idlePromptTimer = useRef<ReturnType<typeof setTimeout> | null>(null) // Section 3, 4, 5에서 사용
+  const idlePromptTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const greetingActive = useRef(true)
 
   // ── 말풍선 표시 ──────────────────────────────────────────
   function showBubble(message: string) {
@@ -118,6 +128,7 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
   useEffect(() => {
     if (!timeMessage) return
     const t = setTimeout(() => {
+      if (greetingActive.current) return
       showBubble(timeMessage)
       clearTimeMessage()
       setExpression('smile')
@@ -126,6 +137,22 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // 마운트 1회만 실행
+
+  // ── 앱 시작 인삿말 (순차 말풍선) ─────────────────────────
+  useEffect(() => {
+    setExpression('smile')
+    const t1 = setTimeout(() => showBubble("Hey, babe! It's lovely to have you here <3"), 300)
+    const t2 = setTimeout(() => showBubble("This is my tiny cozy space."), 2300)
+    const t3 = setTimeout(() => showBubble("Click the bouquet below if you wanna know more about this app!"), 4300)
+    const t4 = setTimeout(() => {
+      greetingActive.current = false
+      setExpression('idle')
+    }, 7500)
+    return () => {
+      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // ── 방치 타이머 ──────────────────────────────────────────
   const { resetIdle, pauseIdle } = useIdleBehavior(() => {
@@ -274,21 +301,59 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
     }
   }
 
-  return (
-    <div className={`yoonah-room theme-${previewTheme}`}>
-      {/* 상단 */}
-      <div className="room-top">
-        <ModeToggle mode={mode} onModeChange={handleModeChange} />
-        <button
-          className="settings-btn"
-          aria-label="Settings"
-          onClick={() => { setIsGiftRoomOpen(false); setIsSettingsOpen(true); setPreviewTheme(settings.theme) }}
-        >
-          ⚙️
-        </button>
-      </div>
+  const bookBg = previewTheme === 'dark' ? bookDark : bookLight
 
-      {/* 중간 — 캐릭터 스테이지 */}
+  return (
+    <div
+      className={`yoonah-room theme-${previewTheme}`}
+      style={{ backgroundImage: `url(${bookBg})` }}
+    >
+      {/* 클릭 에셋: 해바라기 상단 → focus 모드 */}
+      <img
+        className="book-asset asset-sunflower-top"
+        src={sunflower}
+        alt="focus mode"
+        draggable={false}
+        onClick={() => handleModeChange('focus')}
+      />
+
+      {/* 클릭 에셋: 해바라기 하단 → daily 모드 */}
+      <img
+        className="book-asset asset-sunflower-bottom"
+        src={sunflower}
+        alt="daily mode"
+        draggable={false}
+        onClick={() => handleModeChange('daily')}
+      />
+
+      {/* 클릭 에셋: 꽃다발 → 온보딩 */}
+      <img
+        className="book-asset asset-bouquet"
+        src={bouquet}
+        alt="app guide"
+        draggable={false}
+        onClick={() => { setIsGiftRoomOpen(false); setIsSettingsOpen(false); setIsOnboardingOpen(true) }}
+      />
+
+      {/* 클릭 에셋: 메모 → gift room */}
+      <img
+        className="book-asset asset-memo"
+        src={memo}
+        alt="gift room"
+        draggable={false}
+        onClick={() => { setIsSettingsOpen(false); setIsGiftRoomOpen(true) }}
+      />
+
+      {/* 설정 버튼 */}
+      <button
+        className="settings-btn"
+        aria-label="Settings"
+        onClick={() => { setIsGiftRoomOpen(false); setIsSettingsOpen(true); setPreviewTheme(settings.theme) }}
+      >
+        <img src={settingsBtn} alt="" draggable={false} />
+      </button>
+
+      {/* 캐릭터 스테이지 (왼쪽 페이지) */}
       <div className="room-stage">
         <SpeechBubble message={bubbleMessage} visible={isBubbleVisible} offsetX={charOffset.x} offsetY={charOffset.y} />
         <Character
@@ -301,16 +366,14 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
           onLongPressRelease={handleLongPressRelease}
           onOffsetChange={(x, y) => setCharOffset({ x, y })}
         />
-        <HeartEffect hearts={hearts} />
+        <HeartEffect hearts={hearts} offsetX={charOffset.x} offsetY={charOffset.y} />
 
-        {/* 힌트 텍스트: 말풍선 없을 때만 표시 */}
         {!isBubbleVisible && (
           <div className="character-hint">
             {mode === 'daily' ? 'Click me! 🥺' : "Let's focus together 📚"}
           </div>
         )}
 
-        {/* 선물 알림 카드 */}
         {newGift && (
           <div className="gift-notification">
             <span className="gift-notif-emoji">{newGift.emoji}</span>
@@ -322,15 +385,9 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
         )}
       </div>
 
-      {/* 하단 */}
-      <div className="room-bottom">
-        <button
-          className="gift-btn"
-          onClick={() => { setIsSettingsOpen(false); setIsGiftRoomOpen(true) }}
-        >
-          🎁 Gift Room
-        </button>
-        {mode === 'focus' && (
+      {/* Focus 타이머 (오른쪽 페이지) */}
+      {mode === 'focus' && (
+        <div className="focus-timer-area">
           <FocusTimer
             status={timerStatus}
             remainingSeconds={remainingSeconds}
@@ -338,8 +395,28 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
             onPause={pause}
             onReset={reset}
           />
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* 온보딩 오버레이 */}
+      {isOnboardingOpen && (
+        <div className="onboarding-backdrop" onClick={() => setIsOnboardingOpen(false)}>
+          <img
+            className="onboarding-img"
+            src={explainLight}
+            alt="app guide"
+            draggable={false}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <img
+            className="onboarding-frog-btn"
+            src={frogExitBtn}
+            alt="close"
+            draggable={false}
+            onClick={(e) => { e.stopPropagation(); setIsOnboardingOpen(false) }}
+          />
+        </div>
+      )}
 
       {/* 오버레이 패널 */}
       {isGiftRoomOpen && (

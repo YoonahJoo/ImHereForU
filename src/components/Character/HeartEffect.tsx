@@ -1,3 +1,4 @@
+import heartPng from '../../assets/heart.png'
 import './HeartEffect.css'
 
 export interface Heart {
@@ -8,24 +9,28 @@ export interface Heart {
 
 interface HeartEffectProps {
   hearts: Heart[]
+  offsetX?: number
+  offsetY?: number
 }
 
-export function HeartEffect({ hearts }: HeartEffectProps) {
+export function HeartEffect({ hearts, offsetX = 0, offsetY = 0 }: HeartEffectProps) {
   if (hearts.length === 0) return null
 
   return (
     <div className="heart-effect">
       {hearts.map((h) => (
-        <span
+        <img
           key={h.id}
+          src={heartPng}
           className="heart-particle"
+          alt=""
+          draggable={false}
           style={{
-            left: `calc(50% + ${h.x}px)`,
+            left: `calc(40% + ${offsetX + h.x}px)`,
+            bottom: `calc(62% - ${offsetY}px)`,
             animationDelay: `${h.delay}s`,
           }}
-        >
-          💖
-        </span>
+        />
       ))}
     </div>
   )
