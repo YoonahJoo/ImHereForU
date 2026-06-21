@@ -3,7 +3,6 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  /* transform set via inline style: translate(calc(-50% + Xpx), calc(-50% + Ypx)) */
   cursor: pointer;
   z-index: 10;
   user-select: none;
@@ -14,68 +13,117 @@
   cursor: grabbing;
 }
 
-/* ── Inner: handles float animation ── */
-.character-inner {
-  position: relative;
+/* ── Animation layer: bounce / shake ── */
+.character-anim {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.character-img {
-  width: 180px;
+.character-anim.bouncing {
+  animation: bounce 0.4s ease;
+}
+
+.character-anim.shaking {
+  animation: shake 0.45s ease infinite;
+}
+
+/* ── Inner: float / sway / tilt ── */
+.character-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.character-wrapper.is-dragging .character-inner {
+  transform: rotate(5deg);
+}
+
+/* ── Image wrapper: crossfade container ── */
+.char-img-wrapper {
+  position: relative;
+  width: 210px;
+  transition: transform 0.18s ease;
+}
+
+.char-img {
+  width: 210px;
   height: auto;
   display: block;
   pointer-events: none;
   -webkit-user-drag: none;
 }
 
-.character-expression {
-  position: absolute;
-  top: -8px;
-  right: -12px;
-  font-size: 22px;
-  line-height: 1;
-  pointer-events: none;
+/* layerA: normal flow (sets wrapper height) */
+.char-base {
+  transition: opacity 0.25s ease;
 }
 
-/* 더 자연스러운 float — cubic-bezier로 완급 조정 */
+/* layerB: absolute overlay */
+.char-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: opacity 0.25s ease;
+}
+
+/* blink overlay: instant, no transition */
+.char-blink {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.char-visible { opacity: 1; }
+.char-hidden  { opacity: 0; }
+
+/* ── Hover / Press feedback ── */
+.character-wrapper:not(.is-dragging):not(.is-pressed):hover .char-img-wrapper {
+  transform: scale(1.02);
+}
+
+.character-wrapper.is-pressed .char-img-wrapper {
+  transform: scale(0.93);
+  transition: transform 0.1s ease;
+}
+
+/* ── Float animation (idle) ── */
 .character-inner.float {
   animation: float 3.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
 }
 
+/* ── Sway animation (sleepy) ── */
+.character-inner.sway {
+  animation: sway 3s ease-in-out infinite;
+}
+
+/* ── Keyframes ── */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   45%       { transform: translateY(-10px); }
   55%       { transform: translateY(-9px); }
 }
 
-/* ── Emoji ── */
-.character-emoji {
-  font-size: 72px;
-  line-height: 1;
-  position: relative;
-  display: block;
-  transition: transform 0.18s ease;
+@keyframes sway {
+  0%, 100% { transform: rotate(0deg); }
+  25%       { transform: rotate(-2deg); }
+  75%       { transform: rotate(2deg); }
 }
 
-/* Hover: 살짝 scale up (드래그 중이거나 눌렸을 때는 제외) */
-.character-wrapper:not(.is-dragging):not(.is-pressed):hover .character-emoji {
-  transform: scale(1.08);
+@keyframes bounce {
+  0%   { transform: translateY(0); }
+  30%  { transform: translateY(-12px); }
+  60%  { transform: translateY(-4px); }
+  80%  { transform: translateY(-8px); }
+  100% { transform: translateY(0); }
 }
 
-/* Press scale — on emoji so it doesn't conflict with float on inner */
-.character-wrapper.is-pressed .character-emoji {
-  transform: scale(0.88);
-}
-
-/* ── Focus overlay ── */
-.focus-overlay {
-  position: absolute;
-  top: -10px;
-  right: -16px;
-  font-size: 28px;
-  line-height: 1;
-  pointer-events: none;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.12));
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-4px); }
+  40%       { transform: translateX(4px); }
+  60%       { transform: translateX(-3px); }
+  80%       { transform: translateX(3px); }
 }

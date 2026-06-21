@@ -15,27 +15,51 @@
   transition: transform 0.15s, filter 0.15s;
 }
 
+/* ── 해바라기 클릭 wrapper (z-index + 확장 히트 영역) ── */
+.sunflower-hit {
+  position: absolute;
+  cursor: pointer;
+  z-index: 5;
+  -webkit-app-region: no-drag;
+}
+
+.sunflower-hit-top {
+  left: 223px;  /* 253 - 30 */
+  top: 47px;    /* 77 - 30 */
+  width: 155px; /* 95 + 60 */
+  height: 158px; /* 98 + 60 */
+}
+
+.sunflower-hit-bottom {
+  left: 160px;  /* 190 - 30 */
+  top: 427px;   /* 457 - 30 */
+  width: 168px; /* 108 + 60 */
+  height: 171px; /* 111 + 60 */
+}
+
 .asset-sunflower-top {
-  left: 253px;
-  top: 77px;
+  position: absolute;
+  left: 30px;
+  top: 30px;
   width: 95px;
   height: 98px;
   transform: rotate(175.87deg);
 }
 
-.asset-sunflower-top:hover {
+.sunflower-hit-top:hover .asset-sunflower-top {
   transform: rotate(175.87deg) scale(1.08);
   filter: brightness(1.05);
 }
 
 .asset-sunflower-bottom {
-  left: 190px;
-  top: 457px;
+  position: absolute;
+  left: 30px;
+  top: 30px;
   width: 108px;
   height: 111px;
 }
 
-.asset-sunflower-bottom:hover {
+.sunflower-hit-bottom:hover .asset-sunflower-bottom {
   transform: scale(1.08);
   filter: brightness(1.05);
 }
@@ -102,14 +126,60 @@
   filter: brightness(1.05);
 }
 
-/* ── Focus 타이머 (오른쪽 페이지) ── */
-.focus-timer-area {
+/* ── Focus 타이머 창 ── */
+.focus-timer-window {
   position: absolute;
-  right: 60px;
+  right: 48px;
   top: 50%;
   transform: translateY(-50%);
-  width: 280px;
+  width: 240px;
+  background: rgba(232, 224, 213, 0.95);
+  border: 1.5px solid rgba(180, 165, 148, 0.5);
+  border-radius: 20px;
+  padding: 14px 16px;
+  z-index: 100;
   -webkit-app-region: no-drag;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: panel-in 0.22s ease;
+}
+
+.focus-timer-window-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: grab;
+  user-select: none;
+}
+
+.focus-timer-window-header:active {
+  cursor: grabbing;
+}
+
+.focus-timer-window-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1C100A;
+}
+
+.focus-timer-window-close {
+  background: rgba(255, 255, 255, 0.55);
+  border: none;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  font-size: 11px;
+  color: #1C100A;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.focus-timer-window-close:hover {
+  background: rgba(255, 255, 255, 0.9);
 }
 
 /* ── 캐릭터 힌트 텍스트 ── */

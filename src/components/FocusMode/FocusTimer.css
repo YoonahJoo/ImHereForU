@@ -5,13 +5,13 @@
   background: rgba(255, 255, 255, 0.5);
   border-radius: 20px;
   padding: 6px 16px 6px 20px;
-  border: 1.5px solid rgba(170, 140, 210, 0.35);
+  border: 1.5px solid rgba(180, 165, 148, 0.5);
 }
 
 .timer-display {
   font-size: 22px;
   font-weight: 700;
-  color: #c9849e;
+  color: #1C100A;
   letter-spacing: 2px;
   font-variant-numeric: tabular-nums;
   min-width: 62px;
@@ -25,7 +25,7 @@
 }
 
 .timer-btn {
-  background: #c9849e;
+  background: #8a7560;
   border: none;
   border-radius: 50%;
   width: 30px;
@@ -41,15 +41,15 @@
 }
 
 .timer-btn:hover {
-  background: #a87090;
+  background: #6e5b48;
   transform: scale(1.1);
 }
 
 .timer-btn--reset {
-  background: rgba(180, 155, 210, 0.6);
+  background: rgba(180, 165, 148, 0.5);
   font-size: 17px;
 }
 
 .timer-btn--reset:hover {
-  background: rgba(150, 120, 190, 0.85);
+  background: rgba(180, 165, 148, 0.85);
 }

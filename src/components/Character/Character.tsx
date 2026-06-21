@@ -1,24 +1,41 @@
 import { useState, useRef, useEffect } from 'react'
 import type { AppMode, Expression } from '../../types'
-import characterImg from '../../assets/character/yoonah.png'
+import characterIdle from '../../assets/character/character_idle.png'
+import characterIdleBlink from '../../assets/character/character_idle_blink.png'
+import characterWave from '../../assets/character/character_wave.png'
+import characterSmile from '../../assets/character/character_smile.png'
+import characterSulkyDaily from '../../assets/character/character_sulky_daily.png'
+import characterSulkyFocus from '../../assets/character/character_sulky_focus.png'
+import characterSleepy from '../../assets/character/character_sleepy.png'
+import characterFocus from '../../assets/character/character_focus.png'
+import characterDraggingDaily from '../../assets/character/character_dragging_daily.png'
+import characterDraggingFocus from '../../assets/character/character_dragging_focus.png'
+import characterCurious from '../../assets/character/character_curious.png'
+import characterCheering from '../../assets/character/character_cheering.png'
 import './Character.css'
 
-const EMOJI: Record<Expression, string> = {
-  idle: '😚',
-  smile: '🥰',
-  sulky_daily_mode: '😡',
-  sulky_focus_mode: '😤',
-  sleepy: '😪',
-  focus_mode: '👩‍💻',
-  dragging_daily_mode: '🤨',
-  dragging_focus_mode: '😐',
-  curious: '🥸',
-  cheering: '😌',
+const CHARACTER_IMAGES: Record<string, string> = {
+  idle: characterIdle,
+  wave: characterWave,
+  smile: characterSmile,
+  sulky_daily_mode: characterSulkyDaily,
+  sulky_focus_mode: characterSulkyFocus,
+  sleepy: characterSleepy,
+  focus_mode: characterFocus,
+  dragging_daily_mode: characterDraggingDaily,
+  dragging_focus_mode: characterDraggingFocus,
+  curious: characterCurious,
+  cheering: characterCheering,
+}
+
+function getCharImg(expr: string): string {
+  return CHARACTER_IMAGES[expr] ?? characterIdle
 }
 
 interface CharacterProps {
   mode: AppMode
   expression: Expression
+  isTimerRunning: boolean
   onExpressionChange: (expression: Expression) => void
   onClick: () => void
   onDoubleClick: () => void
@@ -30,6 +47,7 @@ interface CharacterProps {
 export function Character({
   mode,
   expression,
+  isTimerRunning,
   onExpressionChange,
   onClick,
   onDoubleClick,
@@ -40,13 +58,68 @@ export function Character({
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const [isPressed, setIsPressed] = useState(false)
 
-  // Stable callback refs — updated every render, used inside effects
+  // Two-layer crossfade system
+  const [layerA, setLayerA] = useState(getCharImg(expression))
+  const [layerB, setLayerB] = useState(getCharImg(expression))
+  const [activeLayer, setActiveLayer] = useState<'A' | 'B'>('A')
+  const currentImgRef = useRef(getCharImg(expression))
+  const activeLayerRef = useRef<'A' | 'B'>('A')
+
+  // Blink overlay (idle only)
+  const [isBlinking, setIsBlinking] = useState(false)
+
+  // Movement animation class
+  const [animClass, setAnimClass] = useState<'bouncing' | 'shaking' | ''>('')
+
+  // Stable callback refs
   const modeRef = useRef(mode)
+  const isTimerRunningRef = useRef(isTimerRunning)
   const cbs = useRef({ onClick, onDoubleClick, onLongPress, onLongPressRelease, onExpressionChange, onOffsetChange })
   useEffect(() => {
     modeRef.current = mode
+    isTimerRunningRef.current = isTimerRunning
     cbs.current = { onClick, onDoubleClick, onLongPress, onLongPressRelease, onExpressionChange, onOffsetChange }
   })
+
+  // Crossfade when expression changes
+  useEffect(() => {
+    const target = getCharImg(expression)
+    if (target === currentImgRef.current) return
+    currentImgRef.current = target
+
+    if (activeLayerRef.current === 'A') {
+      setLayerB(target)
+      activeLayerRef.current = 'B'
+      setActiveLayer('B')
+    } else {
+      setLayerA(target)
+      activeLayerRef.current = 'A'
+      setActiveLayer('A')
+    }
+  }, [expression])
+
+  // Blink timer (idle only)
+  useEffect(() => {
+    if (expression !== 'idle') {
+      setIsBlinking(false)
+      return
+    }
+
+    let timer: ReturnType<typeof setTimeout>
+
+    const scheduleBlink = () => {
+      timer = setTimeout(() => {
+        setIsBlinking(true)
+        timer = setTimeout(() => {
+          setIsBlinking(false)
+          scheduleBlink()
+        }, 150)
+      }, 3000 + Math.random() * 2000)
+    }
+
+    scheduleBlink()
+    return () => clearTimeout(timer)
+  }, [expression])
 
   const drag = useRef({
     active: false,
@@ -63,7 +136,7 @@ export function Character({
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const clickCount = useRef(0)
 
-  // Global mouse listeners — attached once
+  // Global mouse listeners
   useEffect(() => {
     function onMouseMove(e: MouseEvent) {
       if (!drag.current.active) return
@@ -72,8 +145,7 @@ export function Character({
 
       if (!drag.current.moved && Math.hypot(dx, dy) >= 5) {
         drag.current.moved = true
-        // longPressTimer는 취소하지 않음 — 드래그 중에도 5초 홀드 이벤트 발생 가능
-        const draggingExpr = modeRef.current === 'focus'
+        const draggingExpr = isTimerRunningRef.current
           ? 'dragging_focus_mode'
           : 'dragging_daily_mode'
         cbs.current.onExpressionChange(draggingExpr)
@@ -91,6 +163,7 @@ export function Character({
       if (!drag.current.active) return
       drag.current.active = false
       setIsPressed(false)
+      setAnimClass('')
 
       if (longPressTimer.current) {
         clearTimeout(longPressTimer.current)
@@ -99,27 +172,25 @@ export function Character({
 
       if (drag.current.moved) {
         if (longPressFired.current) {
-          // 드래그 중 5초 홀드도 달성 → long press release 처리 우선
           longPressFired.current = false
           cbs.current.onLongPressRelease()
         } else {
-          // 일반 드래그 종료 → 이전 표정으로 복귀
           cbs.current.onExpressionChange(drag.current.prevExpr)
         }
         return
       }
 
-      // Long press was triggered — delegate release handling to parent (mode-aware)
       if (longPressFired.current) {
         longPressFired.current = false
         cbs.current.onLongPressRelease()
         return
       }
 
-      // Click / double-click detection
       clickCount.current++
       if (clickCount.current === 1) {
         clickTimer.current = setTimeout(() => {
+          setAnimClass('bouncing')
+          setTimeout(() => setAnimClass(''), 400)
           cbs.current.onClick()
           clickCount.current = 0
         }, 250)
@@ -163,13 +234,14 @@ export function Character({
     longPressTimer.current = setTimeout(() => {
       longPressFired.current = true
       longPressTimer.current = null
+      setAnimClass('shaking')
       cbs.current.onLongPress()
     }, 5000)
   }
 
-  const isFloat = expression === 'idle'
+  const isFloat = expression === 'idle' && animClass === ''
+  const isSway = expression === 'sleepy'
   const isDragging = expression === 'dragging_daily_mode' || expression === 'dragging_focus_mode'
-  const isFocus = expression === 'focus_mode'
 
   return (
     <div
@@ -177,20 +249,35 @@ export function Character({
         'character-wrapper',
         isDragging ? 'is-dragging' : '',
         isPressed && !drag.current.moved ? 'is-pressed' : '',
-      ]
-        .join(' ')
-        .trim()}
-      style={{
-        transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))`,
-      }}
+      ].filter(Boolean).join(' ')}
+      style={{ transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))` }}
       onMouseDown={handleMouseDown}
     >
-      <div className={`character-inner${isFloat ? ' float' : ''}`}>
-        <img src={characterImg} className="character-img" alt="character" draggable={false} />
-        <span className="character-expression">
-          {EMOJI[expression]}
-          {isFocus && <span className="focus-overlay">📚</span>}
-        </span>
+      <div className={['character-anim', animClass].filter(Boolean).join(' ')}>
+        <div className={['character-inner', isFloat ? 'float' : '', isSway ? 'sway' : ''].filter(Boolean).join(' ')}>
+          <div className="char-img-wrapper">
+            <img
+              src={layerA}
+              className={`char-img char-base ${activeLayer === 'A' ? 'char-visible' : 'char-hidden'}`}
+              alt="character"
+              draggable={false}
+            />
+            <img
+              src={layerB}
+              className={`char-img char-overlay ${activeLayer === 'B' ? 'char-visible' : 'char-hidden'}`}
+              alt=""
+              draggable={false}
+            />
+            {isBlinking && (
+              <img
+                src={characterIdleBlink}
+                className="char-img char-blink"
+                alt=""
+                draggable={false}
+              />
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )

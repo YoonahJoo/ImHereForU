@@ -62,6 +62,7 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
   const [hearts, setHearts] = useState<Heart[]>([])
   const [gifts, setGifts] = useState<GiftItem[]>(() => loadGifts())
   const [newGift, setNewGift] = useState<GiftItem | null>(null)
+  const [isFocusTimerOpen, setIsFocusTimerOpen] = useState(false)
   const [isGiftRoomOpen, setIsGiftRoomOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false)
@@ -72,6 +73,12 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
     () => loadSettings()?.theme ?? 'light'
   )
   const [charOffset, setCharOffset] = useState({ x: 0, y: 0 })
+  const [hasClickedChar, setHasClickedChar] = useState(false)
+  const [timerPos, setTimerPos] = useState<{ x: number; y: number } | null>(null)
+
+  const roomRef = useRef<HTMLDivElement>(null)
+  const timerWindowRef = useRef<HTMLDivElement>(null)
+  const timerDragOffset = useRef<{ x: number; y: number } | null>(null)
 
   const bubbleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const exprTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -87,6 +94,43 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
     setBubbleMessage(message)
     setIsBubbleVisible(true)
     bubbleTimer.current = setTimeout(() => setIsBubbleVisible(false), 3000)
+  }
+
+  // ── Focus 타이머 창 드래그 ────────────────────────────────
+  function handleTimerDragMove(e: MouseEvent) {
+    const room = roomRef.current
+    const win = timerWindowRef.current
+    const offset = timerDragOffset.current
+    if (!room || !win || !offset) return
+    const roomRect = room.getBoundingClientRect()
+    let x = e.clientX - roomRect.left - offset.x
+    let y = e.clientY - roomRect.top - offset.y
+    const maxX = roomRect.width - win.offsetWidth
+    const maxY = roomRect.height - win.offsetHeight
+    x = Math.max(0, Math.min(x, maxX))
+    y = Math.max(0, Math.min(y, maxY))
+    setTimerPos({ x, y })
+  }
+
+  function handleTimerDragEnd() {
+    timerDragOffset.current = null
+    window.removeEventListener('mousemove', handleTimerDragMove)
+    window.removeEventListener('mouseup', handleTimerDragEnd)
+  }
+
+  function handleTimerDragStart(e: React.MouseEvent) {
+    // 닫기 버튼 클릭은 드래그로 처리하지 않음
+    if ((e.target as HTMLElement).closest('.focus-timer-window-close')) return
+    const room = roomRef.current
+    const win = timerWindowRef.current
+    if (!room || !win) return
+    const roomRect = room.getBoundingClientRect()
+    const winRect = win.getBoundingClientRect()
+    timerDragOffset.current = { x: e.clientX - winRect.left, y: e.clientY - winRect.top }
+    // 현재 위치를 left/top 기준으로 고정
+    setTimerPos({ x: winRect.left - roomRect.left, y: winRect.top - roomRect.top })
+    window.addEventListener('mousemove', handleTimerDragMove)
+    window.addEventListener('mouseup', handleTimerDragEnd)
   }
 
   // ── Focus 완료 처리 ───────────────────────────────────────
@@ -140,7 +184,7 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
 
   // ── 앱 시작 인삿말 (순차 말풍선) ─────────────────────────
   useEffect(() => {
-    setExpression('smile')
+    setExpression('wave')
     const t1 = setTimeout(() => showBubble("Hey, babe! It's lovely to have you here <3"), 300)
     const t2 = setTimeout(() => showBubble("This is my tiny cozy space."), 2300)
     const t3 = setTimeout(() => showBubble("Click the bouquet below if you wanna know more about this app!"), 4300)
@@ -228,6 +272,7 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
       return
     }
 
+    setHasClickedChar(true)
     resetIdle()
     if (exprTimer.current) clearTimeout(exprTimer.current)
 
@@ -279,24 +324,22 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
   function handleLongPress() {
     resetIdle()
     if (exprTimer.current) clearTimeout(exprTimer.current)
-    if (mode === 'daily') {
+    if (timerStatus !== 'running') {
       setExpression('sulky_daily_mode')
       showBubble(getRandomMessage(sulkyMessages).text)
     } else {
       setExpression('sulky_focus_mode')
       showBubble(sulkyFocusModeHoldMessage)
     }
-    // Character 컴포넌트가 mouseup 시 onLongPressRelease()로 복귀 처리
   }
 
   function handleLongPressRelease() {
     if (exprTimer.current) clearTimeout(exprTimer.current)
-    if (mode === 'daily') {
+    if (timerStatus !== 'running') {
       setExpression('idle')
       showBubble(sulkyDailyReleaseMessage)
     } else {
-      const returnExpr = timerStatus === 'running' ? 'focus_mode' : 'idle'
-      setExpression(returnExpr)
+      setExpression('focus_mode')
       showBubble(sulkyFocusModeReleaseMessage)
     }
   }
@@ -305,26 +348,35 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
 
   return (
     <div
+      ref={roomRef}
       className={`yoonah-room theme-${previewTheme}`}
       style={{ backgroundImage: `url(${bookBg})` }}
     >
-      {/* 클릭 에셋: 해바라기 상단 → focus 모드 */}
-      <img
-        className="book-asset asset-sunflower-top"
-        src={sunflower}
-        alt="focus mode"
-        draggable={false}
-        onClick={() => handleModeChange('focus')}
-      />
+      {/* 클릭 에셋: 해바라기 상단 → focus 모드 + 타이머 창 */}
+      <div
+        className="sunflower-hit sunflower-hit-top"
+        onClick={() => { handleModeChange('focus'); setIsFocusTimerOpen(true) }}
+      >
+        <img
+          className="book-asset asset-sunflower-top"
+          src={sunflower}
+          alt="focus mode"
+          draggable={false}
+        />
+      </div>
 
       {/* 클릭 에셋: 해바라기 하단 → daily 모드 */}
-      <img
-        className="book-asset asset-sunflower-bottom"
-        src={sunflower}
-        alt="daily mode"
-        draggable={false}
+      <div
+        className="sunflower-hit sunflower-hit-bottom"
         onClick={() => handleModeChange('daily')}
-      />
+      >
+        <img
+          className="book-asset asset-sunflower-bottom"
+          src={sunflower}
+          alt="daily mode"
+          draggable={false}
+        />
+      </div>
 
       {/* 클릭 에셋: 꽃다발 → 온보딩 */}
       <img
@@ -359,6 +411,7 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
         <Character
           mode={mode}
           expression={expression}
+          isTimerRunning={timerStatus === 'running'}
           onExpressionChange={setExpression}
           onClick={handleClick}
           onDoubleClick={handleDoubleClick}
@@ -368,9 +421,9 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
         />
         <HeartEffect hearts={hearts} offsetX={charOffset.x} offsetY={charOffset.y} />
 
-        {!isBubbleVisible && (
+        {!isBubbleVisible && !hasClickedChar && (
           <div className="character-hint">
-            {mode === 'daily' ? 'Click me! 🥺' : "Let's focus together 📚"}
+            {mode === 'daily' ? 'Click me!' : "Let's focus together"}
           </div>
         )}
 
@@ -385,9 +438,23 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
         )}
       </div>
 
-      {/* Focus 타이머 (오른쪽 페이지) */}
-      {mode === 'focus' && (
-        <div className="focus-timer-area">
+      {/* Focus 타이머 창 */}
+      {isFocusTimerOpen && (
+        <div
+          className="focus-timer-window"
+          ref={timerWindowRef}
+          style={timerPos ? { left: timerPos.x, top: timerPos.y, right: 'auto', transform: 'none' } : undefined}
+        >
+          <div className="focus-timer-window-header" onMouseDown={handleTimerDragStart}>
+            <span className="focus-timer-window-title">Focus Timer ⏱</span>
+            <button
+              className="focus-timer-window-close"
+              aria-label="Close"
+              onClick={() => setIsFocusTimerOpen(false)}
+            >
+              ✕
+            </button>
+          </div>
           <FocusTimer
             status={timerStatus}
             remainingSeconds={remainingSeconds}
