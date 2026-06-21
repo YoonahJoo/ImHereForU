@@ -56,8 +56,7 @@ export const timeBasedMessages: Record<TimeOfDay, Message> = {
 
 export const sulkyMessages: Message[] = [
   { id: 's1', text: 'Let me goooo', type: 'sulky' },
-  { id: 's2', text: 'aww you love me so much huh?', type: 'sulky' },
-  { id: 's3', text: 'Babeee Im dizzy', type: 'sulky' },
+  { id: 's2', text: 'Babeee Im dizzy', type: 'sulky' },
 ]
 
 // ────────────────────────────────────────────────────────────
@@ -65,7 +64,7 @@ export const sulkyMessages: Message[] = [
 // ────────────────────────────────────────────────────────────
 
 export const sulkyDailyHoldMessage = 'let me goooo'
-export const sulkyDailyReleaseMessage = 'yeay!'
+export const sulkyDailyReleaseMessage = 'Thanks!'
 export const sulkyFocusModeHoldMessage = 'babeee focussss!!'
 export const sulkyFocusModeReleaseMessage = 'you got this!! almost there!!'
 

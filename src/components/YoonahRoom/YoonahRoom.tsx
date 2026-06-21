@@ -342,11 +342,14 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
   function handleLongPressRelease() {
     if (exprTimer.current) clearTimeout(exprTimer.current)
     if (timerStatus !== 'running') {
-      setExpression('idle')
+      setExpression('smile')
       showBubble(sulkyDailyReleaseMessage)
+      exprTimer.current = setTimeout(() => setExpression('idle'), 3000)
     } else {
-      setExpression('focus_mode')
+      setExpression('cheering')
       showBubble(sulkyFocusModeReleaseMessage)
+      if (cheeringReturnTimer.current) clearTimeout(cheeringReturnTimer.current)
+      cheeringReturnTimer.current = setTimeout(() => setExpression('focus_mode'), 2000)
     }
   }
 
@@ -356,8 +359,13 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
     <div
       ref={roomRef}
       className={`yoonah-room theme-${previewTheme}`}
-      style={{ backgroundImage: `url(${bookBg})` }}
     >
+      <img
+        className={`book-bg${previewTheme === 'dark' ? ' book-bg--dark' : ''}`}
+        src={bookBg}
+        alt=""
+        draggable={false}
+      />
       {/* 클릭 에셋: 해바라기 상단 → focus 모드 + 타이머 창 */}
       <div
         className="sunflower-hit sunflower-hit-top"

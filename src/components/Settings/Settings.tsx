@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { AppMode, UserSettings } from '../../types'
+import settingsIcon from '../../assets/settings.png'
 import './Settings.css'
 
 interface SettingsProps {
@@ -14,7 +15,7 @@ export function Settings({ settings, onSave, onClose, currentTheme, onThemePrevi
   const [userName, setUserName] = useState(settings.userName)
   const [partnerNickname, setPartnerNickname] = useState(settings.partnerNickname)
   const [customMessages, setCustomMessages] = useState<string[]>(settings.customMessages)
-  const [defaultMode, setDefaultMode] = useState<AppMode>(settings.defaultMode)
+  const [defaultMode] = useState<AppMode>(settings.defaultMode)
   const [theme, setTheme] = useState<'light' | 'dark'>(settings.theme)
   const [newMessage, setNewMessage] = useState('')
 
@@ -40,7 +41,10 @@ export function Settings({ settings, onSave, onClose, currentTheme, onThemePrevi
   return (
     <div className={`settings-panel${currentTheme === 'dark' ? ' theme-dark' : ''}`}>
       <div className="settings-header">
-        <h2 className="settings-title">⚙️ Settings</h2>
+        <h2 className="settings-title">
+          <img className="settings-title-icon" src={settingsIcon} alt="" draggable={false} />
+          Settings
+        </h2>
         <button className="settings-close" onClick={onClose} aria-label="Close">✕</button>
       </div>
 
@@ -63,24 +67,6 @@ export function Settings({ settings, onSave, onClose, currentTheme, onThemePrevi
             onChange={e => setPartnerNickname(e.target.value)}
             placeholder="Yoonah"
           />
-        </div>
-
-        <div className="settings-field">
-          <label className="settings-label">Default Mode</label>
-          <div className="settings-mode-toggle">
-            <button
-              className={`settings-mode-btn${defaultMode === 'daily' ? ' active' : ''}`}
-              onClick={() => setDefaultMode('daily')}
-            >
-              Daily
-            </button>
-            <button
-              className={`settings-mode-btn${defaultMode === 'focus' ? ' active' : ''}`}
-              onClick={() => setDefaultMode('focus')}
-            >
-              Focus
-            </button>
-          </div>
         </div>
 
         <div className="settings-field">
