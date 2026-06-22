@@ -4,33 +4,93 @@
 
 ---
 
-## 2026-06-22 — v2.0 마무리 (캐릭터 애니메이션 + UI 폴리시)
+## 2026-06-22 — v2.0 마무리 폴리시 (인터랙션 + 테마 + 인삿말)
 
 ### 배경
-v2.0 책 UI 리워크의 마지막 단계. 캐릭터 애니메이션 시스템을 완성하고,
-온보딩·패널·타이머 등 전반 UI를 다듬어 v2.0을 종료. 다음은 v3.0(캐릭터가 책 밖으로).
+캐릭터 애니메이션 시스템 완성(`008fc9b`) 이후, 인터랙션 디테일·테마·시작 시퀀스를 집중적으로 다듬어 v2.0을 마무리.
 
 ### 구현한 것들
 
-**캐릭터 애니메이션 시스템** (`008fc9b`)
-- 표정 이미지 기반 시스템 + 표정 전환 crossfade
-- 주기적 blink, movement(float/sway 등) 애니메이션
+**드래그 인터랙션 개선** (`cc423e0`)
+- 드래그 시 말풍선 출력: daily → `"where am I going?"`, focus → `"Oops!"`
+- 드래그 애니메이션: 고정 기울기(rotate 5deg) → **pendulum** (-12deg ↔ +12deg, 0.6s)
 
-**UI 폴리시 — 온보딩/패널/테마** (`cc423e0`)
-- 말풍선 드래그 추종, 온보딩 캐러셀(explain 1~3, 라이트/다크)
-- Settings / Gift Room 패널 오버레이 + 다크/라이트 대응
+**패널 오버레이 리워크** (`cc423e0`)
+- GiftRoom / Settings: `inset: 0` 전체 덮기 → **blur+darken backdrop** + floating 패널
+  - backdrop 클릭으로 닫힘, 패널 클릭은 stopPropagation
+  - GiftRoom 500×440px / Settings 420×480px, border-radius 20px
 
-**UI 폴리시 — 타이머/세팅/표정** (`bffc0e5`)
-- Focus 타이머 창: 헤더 드래그로 위치 이동 (컨테이너 경계 clamp)
-- Focus 타이머 색상: 말풍선 팔레트(크림 #E8E0D5 / 탄 / 브라운 #1C100A)에 통일
-- Settings: ⚙️ 이모지 → settings.png 아이콘, Default Mode 토글 제거
-- 캐릭터 힌트("Click me" / "Let's focus together") 이모지 제거
-- 롱프레스 해제 표정 변경: daily → smile(3초 후 idle), focus → cheering(2초 후 focus_mode)
-  - cheering 표정 재사용으로 focus용 별도 에셋 없이 처리
+**색상 팔레트 통일** (`cc423e0`)
+- GiftRoom / Settings light theme: pink/purple → **warm brown** (타이머 팔레트 기준)
+  - 배경: `#faf8f5 → #f3ede6 → #ece6dc`, 강조: `#8a7560`, hover: `#6e5b48`
+- GiftRoom / Settings / Timer 창 dark theme: blue/navy → **warm chocolate brown**
+  - 배경: `#2e1a0d → #3a2010 → #4a2a18`, 텍스트: `#d4b896`, 버튼: `#a07848`
+  - Timer 창 dark mode 신규 추가 (`.theme-dark .focus-timer-window` 등)
+
+**온보딩 캐러셀** (`cc423e0`)
+- explain 이미지 1장 → light 3장 + dark 3장 (총 6개 에셋)
+- 좌/우 화살표 버튼, 하단 dot 인디케이터, 페이지 초기화(열릴 때마다 0으로)
+
+**시작 인삿말 시간대별 분기** (`20697ad`)
+- morning/afternoon/evening: 시간대 인사 → "It's lovely to see you here" → cozy → bouquet → idle
+- night: 기본 인사 → cozy → bouquet → `character_sleepy` + 야간 경고 → idle
+- dawn: 기본 인사 → cozy → bouquet → `character_sulky_daily` + 새벽 경고 → idle
+- 타이머 배열 방식으로 관리, 각 분기별 clearTimeout 보장
+
+**말풍선 폰트 사이즈** (`20697ad`)
+- 12.5px → 15.5px
 
 ### 메모
-- 롱프레스(sulky)는 "5초 이상 누르기"가 조건 — 드래그 여부와 무관. 떼는 순간 release 표정 발동.
-- v2.0 완료. v3.0 기획서 작성: `docs/v3.0-plan.md`
+- dark theme는 `.theme-dark` 클래스가 `.yoonah-room`에 붙는 구조 → 모든 dark 규칙은 이 클래스로 범위 지정
+- explain-dark.png(구 단일 파일)는 유지, 새 에셋은 explain-dark-1/2/3.png
+
+---
+
+## 2026-06-22 — v2.0 캐릭터 애니메이션 시스템
+
+### 배경
+v2.0 책 UI 리워크의 핵심 기술 과제. 기존 단일 이미지 캐릭터를 12개 표정 이미지 기반의 애니메이션 시스템으로 전환.
+
+### 구현한 것들
+
+**캐릭터 에셋 전략 결정** — GPT 이미지 생성, Method A
+- 레이어 방식 포기 → 표정별 완성 이미지 12장 (AI 생성 모델은 픽셀 정렬 보장 불가)
+- 에셋: character_idle/idle_blink/wave/smile/focus/sleepy/sulky_daily/sulky_focus/dragging_daily/dragging_focus/curious/cheering
+- 공통 조건: 1110×1417px, 투명 PNG, 캐릭터 위치 전 이미지 동일
+
+**Character 컴포넌트 전면 재작성** (`008fc9b`)
+- 두 레이어 crossfade: layerA(normal flow) / layerB(absolute overlay), 0.25s opacity 전환
+  - `activeLayerRef`로 stale closure 방지
+- idle blink: 별도 overlay 이미지(`char-blink`), 3~5초 간격, 150ms 지속, crossfade 없음
+- movement 애니메이션: float(idle), sway(sleepy), bounce(클릭), shake(롱프레스), pendulum(드래그)
+- `isTimerRunning` prop 추가: focus/daily 표정 분기의 단일 기준으로 사용
+  - 기존 `mode === 'focus'` 조건 제거 → `timerStatus === 'running'` 하나로 통일
+
+**버그 수정**
+- Focus 타이머 pause → resume 후 dragging/sulky가 daily로 적용되는 버그
+  - 원인: `mode` 비교가 타이밍에 따라 'daily'로 남을 수 있음
+  - 해결: `mode` 조건 제거, `isTimerRunningRef.current` 단독 사용
+
+### 메모
+- `pause()`는 내부적으로 `setStatus('cancelled')` — 'paused' 상태 없음
+- `start()`는 `remainingSeconds`에서 이어서 재개
+
+---
+
+## 2026-06-22 — v2.0 타이머/세팅/표정 폴리시
+
+### 배경
+캐릭터 시스템 완성 후 Focus 타이머 창, Settings, 표정 세부 동작을 다듬음.
+
+### 구현한 것들 (`bffc0e5`)
+
+- Focus 타이머 창: 헤더 드래그로 위치 이동, 컨테이너 경계 clamp
+- Focus 타이머 색상: 말풍선 팔레트(크림 `rgba(232,224,213)` / 탄 / 브라운 `#1C100A`) 통일
+- Settings: ⚙️ 이모지 → `settings.png` 아이콘, Default Mode 토글 제거
+- 캐릭터 힌트 텍스트: 이모지 제거
+- 롱프레스 해제 표정:
+  - daily → `smile` (3초 후 idle)
+  - focus → `cheering` (2초 후 focus_mode)
 
 ---
 
