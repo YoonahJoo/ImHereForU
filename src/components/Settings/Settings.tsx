@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import type { AppMode, UserSettings } from '../../types'
-import settingsIcon from '../../assets/settings.png'
 import './Settings.css'
 
 interface SettingsProps {
@@ -41,10 +40,7 @@ export function Settings({ settings, onSave, onClose, currentTheme, onThemePrevi
   return (
     <div className={`settings-panel${currentTheme === 'dark' ? ' theme-dark' : ''}`}>
       <div className="settings-header">
-        <h2 className="settings-title">
-          <img className="settings-title-icon" src={settingsIcon} alt="" draggable={false} />
-          Settings
-        </h2>
+        <h2 className="settings-title">Settings</h2>
         <button className="settings-close" onClick={onClose} aria-label="Close">✕</button>
       </div>
 

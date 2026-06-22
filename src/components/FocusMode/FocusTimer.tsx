@@ -18,8 +18,8 @@ function formatTime(seconds: number): string {
 export function FocusTimer({ status, remainingSeconds, onStart, onPause, onReset }: FocusTimerProps) {
   return (
     <div className="focus-timer">
-      <span className="timer-display">
-        {status === 'completed' ? 'Done! 🎉' : formatTime(remainingSeconds)}
+      <span className={`timer-display${status === 'completed' ? ' timer-display--done' : ''}`}>
+        {status === 'completed' ? 'Done <3' : formatTime(remainingSeconds)}
       </span>
 
       <div className="timer-controls">

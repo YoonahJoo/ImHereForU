@@ -18,6 +18,11 @@
   text-align: center;
 }
 
+.timer-display--done {
+  font-size: 15px;
+  letter-spacing: 0.5px;
+}
+
 .timer-controls {
   display: flex;
   gap: 6px;

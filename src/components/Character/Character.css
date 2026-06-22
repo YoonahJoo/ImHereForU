@@ -45,12 +45,12 @@
 /* ── Image wrapper: crossfade container ── */
 .char-img-wrapper {
   position: relative;
-  width: 210px;
+  width: 240px;
   transition: transform 0.18s ease;
 }
 
 .char-img {
-  width: 210px;
+  width: 240px;
   height: auto;
   display: block;
   pointer-events: none;

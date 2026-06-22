@@ -21,7 +21,7 @@ export function GiftRoom({ gifts, onClose, theme }: GiftRoomProps) {
   return (
     <div className={`gift-room${theme === 'dark' ? ' theme-dark' : ''}`}>
       <div className="gift-room-header">
-        <h2 className="gift-room-title">🎁 Gift Room</h2>
+        <h2 className="gift-room-title">Gift Room</h2>
         <button className="gift-room-close" onClick={onClose} aria-label="Close">✕</button>
       </div>
 

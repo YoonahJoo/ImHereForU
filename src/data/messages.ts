@@ -11,11 +11,11 @@ import type { Message, TimeOfDay } from '../types'
 
 export const dailyMessages: Message[] = [
   { id: 'd1', text: 'I miss you babe', type: 'daily' },
-  { id: 'd2', text: "I wonder whatcha doing now!", type: 'daily' },
-  { id: 'd3', text: "You're sooooo cute ", type: 'daily' },
-  { id: 'd4', text: "I'd be happy if you text me!", type: 'daily' },
-  { id: 'd5', text: "You have no idea how much I love you", type: 'daily' },
-  { id: 'd6', text: "I'm tiny,, but I love you big!.", type: 'daily' },
+  { id: 'd2', text: "Show me your to-do list!", type: 'daily' },
+  { id: 'd3', text: "You're sooooo cute <3", type: 'daily' },
+  { id: 'd4', text: "I'd be happy if you text meee", type: 'daily' },
+  { id: 'd5', text: "You have no idea how much I LOVE you", type: 'daily' },
+  { id: 'd6', text: "I'm tiny but I love you big >_< !!!", type: 'daily' },
 ]
 
 // ────────────────────────────────────────────────────────────
@@ -30,22 +30,22 @@ export const timeBasedMessages: Record<TimeOfDay, Message> = {
   },
   afternoon: {
     id: 'tb-afternoon',
-    text: 'Have you eaten babe?',
+    text: 'Good afternoon!',
     type: 'time-based',
   },
   evening: {
     id: 'tb-evening',
-    text: "Good evening! how's your day going?",
+    text: "Good evening! Did you have dinner?",
     type: 'time-based',
   },
   night: {
     id: 'tb-night',
-    text: "It's night time babe",
+    text: "It's getting late tho! Aren't you sleepy?",
     type: 'time-based',
   },
   dawn: {
     id: 'tb-dawn',
-    text: "Hey babe, it's pretty late to work tho. Aren't you sleepy?",
+    text: "Wait wait, its too late! Go get some sleep babeee >:(",
     type: 'time-based',
   },
 }
@@ -73,15 +73,15 @@ export const sulkyFocusModeReleaseMessage = 'you got this!! almost there!!'
 // ────────────────────────────────────────────────────────────
 
 export const idleWakePromptMessage = 'click me if you wanna wake me up'
-export const idleWakeResponseMessage = 'hehe I missed u'
+export const idleWakeResponseMessage = "Oh you didn't forget me! I missed u"
 
 // ────────────────────────────────────────────────────────────
 // D. 방치 상태 말풍선 (15분 이상 인터랙션 없음)
 // ────────────────────────────────────────────────────────────
 
 export const idleMessages: Message[] = [
-  { id: 'i1', text: 'Hmm I need attention..', type: 'idle' },
-  { id: 'i2', text: "Helloooo? Are you there?", type: 'idle' },
+  { id: 'i1', text: 'Hmm I need attention..zzz', type: 'idle' },
+  { id: 'i2', text: "Babe I'm falling asleepppp...zzz", type: 'idle' },
 ]
 
 // ────────────────────────────────────────────────────────────
@@ -90,10 +90,10 @@ export const idleMessages: Message[] = [
 
 export const focusMessages: Message[] = [
   { id: 'f1', text: "I'm watching you, lock in!", type: 'focus' },
-  { id: 'f2', text: 'No doom scrolling 👀', type: 'focus' },
+  { id: 'f2', text: "Who's doing doom scrolling 👀 !!", type: 'focus' },
   { id: 'f3', text: "You're doing great, babe.", type: 'focus' },
-  { id: 'f4', text: "aww hard working babe, I'm in love again", type: 'focus' },
-  { id: 'f5', text: "Almost there! Don't give up.", type: 'focus' },
+  { id: 'f4', text: "My hard working babe, I'm in love again hehe", type: 'focus' },
+  { id: 'f5', text: "Almost there! Don't give up!!", type: 'focus' },
   { id: 'f6', text: "You've got this!", type: 'focus' },
 ]
 

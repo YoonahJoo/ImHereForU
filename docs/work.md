@@ -1,66 +1,50 @@
 # Work — 현재 작업 현황
 
-**최종 업데이트**: 2026-06-15
+**최종 업데이트**: 2026-06-22
 
 ---
 
-## 현재 단계: 책 UI 디자인 리워크
+## 현재 단계: v2.0 완료 → v3.0 준비
 
-MVP 기능 구현 완료 후, 전체 UI를 책 에셋 기반으로 교체하는 작업 진행 중.
+v2.0(책 UI 리워크)이 마무리되었다. 캐릭터 애니메이션 시스템, 온보딩 캐러셀,
+패널 오버레이, 드래그 가능한 Focus 타이머, 표정/세팅 폴리시까지 완료.
+다음은 v3.0 — **캐릭터가 책 밖으로 나오는** 데스크톱 메이트 확장.
+
+> v3.0 기획서: [v3.0-plan.md](v3.0-plan.md)
 
 ---
 
 ## 완료된 작업
 
 ### MVP 기능 (~ 2026-06-01)
-- [x] 캐릭터 표정 시스템 (10종)
-- [x] 마우스 인터랙션 (클릭 / 더블클릭 / 드래그 / 롱프레스)
-- [x] 말풍선 시스템
-- [x] Daily / Focus 모드 전환
-- [x] Focus 타이머 (25분 포모도로)
-- [x] Focus 타이머 실행 중 모드 전환 차단 + "where u going" 메시지
-- [x] 방치 감지 Idle Behavior (15분)
-- [x] 시간대 자동 인사
-- [x] 선물 시스템 (희귀도 가중치)
-- [x] Gift Room UI
-- [x] Settings (이름, 기본 모드, 커스텀 메시지)
-- [x] 라이트 / 다크 테마
-- [x] localStorage 영속성
+- [x] 캐릭터 표정 시스템, 마우스 인터랙션 (클릭/더블클릭/드래그/롱프레스)
+- [x] 말풍선 시스템 / Daily·Focus 모드 / Focus 타이머(25분)
+- [x] 방치 감지 Idle Behavior(15분) / 시간대 자동 인사
+- [x] 선물 시스템 + Gift Room / Settings / 라이트·다크 테마 / localStorage 영속성
 
-### 책 UI 디자인 리워크 (2026-06-15 ~)
-- [x] Transparent frameless Electron 윈도우 적용
-- [x] 책 열리는 인트로 애니메이션 (BookIntro 컴포넌트)
-  - 인트로 창 500×750 (세로) → 메인 창 900×639 (가로) IPC 리사이즈
-  - 책 표지(book-outside.jpeg) fade in → 3D flip → 책 내지(book-light/dark.png)
-- [x] book-light.png / book-dark.png 메인 배경 적용
-- [x] 캐릭터 에셋 교체 (yoonah-v2.0.png)
-- [x] 인터랙티브 에셋 오버레이 Figma 좌표 기반 절대 위치 배치
-  - sunflower 상단 (focus mode) — x:253, y:77, rotate:175.87deg
-  - sunflower 하단 (daily mode) — x:190, y:457
-  - bouquet (온보딩) — x:711, y:410, rotate:-18.43deg
-  - memo (gift room) — x:565, y:44
-- [x] 설정 버튼 → heart PNG 교체
-- [x] 더블클릭 하트 이펙트 → 구겨진 종이 heart PNG 교체
-- [x] 앱 시작 순차 인삿말 (말풍선 3개 순차 출력)
-- [x] 말풍선 스타일 변경 (Fog Mist 베이지 배경 + 에스프레소 브라운 글씨)
-- [x] bouquet 클릭 → 앱 온보딩 오버레이 (explain-light.png + frog 닫기 버튼)
+### v2.0 — 책 UI 리워크 (2026-06-15 ~ 2026-06-22) ✅ 완료
+- [x] Transparent frameless Electron 윈도우
+- [x] 책 열리는 인트로 애니메이션(BookIntro) + IPC 창 리사이즈
+- [x] book-light/dark.png 메인 배경, 캐릭터 일러스트 교체
+- [x] 인터랙티브 에셋(sunflower/bouquet/memo/settings) Figma 좌표 절대 배치
+- [x] 캐릭터 애니메이션 시스템 — 표정 이미지 crossfade, blink, movement 애니메이션
+- [x] 말풍선 드래그 추종 + Fog Mist 베이지 스타일
+- [x] 온보딩 캐러셀(explain 1~3, 라이트/다크) + frog 닫기 버튼
+- [x] 패널 오버레이(Settings / Gift Room) 책 UI 대응 + 다크 테마
+- [x] Focus 타이머 창 — 헤더 드래그로 위치 이동
+- [x] Focus 타이머 색상 — 말풍선 팔레트(크림/탄/브라운)에 통일
+- [x] Settings ⚙️ 이모지 → settings.png, Default Mode 토글 제거
+- [x] 캐릭터 힌트 텍스트 이모지 제거
+- [x] 롱프레스 해제 표정 — daily→smile, focus→cheering (자동 복귀)
 
 ---
 
-## 진행 중
+## 다음 작업: v3.0 — 캐릭터가 책 밖으로
 
-- [ ] 상단 sunflower → Focus 타이머 start/pause 연결
-  - 현재: 모드 전환만 동작
-  - 목표: 클릭마다 timer start/pause 토글 + 모드 전환 통합
+상세는 [v3.0-plan.md](v3.0-plan.md) 참고. 먼저 확정 필요 사항(트리거/행동/범위) 결정 후 착수.
 
----
-
-## 다음 작업 (우선순위 순)
-
-- [ ] 상단 sunflower 타이머 연동 완료
-- [ ] explain-dark.png 온보딩 (다크 모드용 오버레이)
-- [ ] book-light/dark.png에서 에셋 겹치는 부분 제거한 클린 버전으로 교체
-- [ ] focus 타이머 UI 위치/스타일 재정비 (오른쪽 페이지 영역)
-- [ ] Settings 패널 책 UI에 맞게 스타일 업데이트
-- [ ] Gift Room 책 UI에 맞게 스타일 업데이트
-- [ ] 다크 모드 전체 에셋 위치 확인 및 조정
+- [ ] 확정 필요 사항 5종 결정 (트리거, 데스크톱 행동, 책 접힘 시 동작, 모니터 범위, 완료 정의)
+- [ ] M1 — 캐릭터 전용 투명 오버레이 윈도우 PoC (클릭 통과 포함)
+- [ ] M2 — 책 ↔ 오버레이 상태 동기화(IPC) + "밖으로 나오기" 트리거
+- [ ] M3 — 데스크톱 이동/행동(이동, 마우스 추적, 방치 시 귀가)
+- [ ] M4 — 전환 연출 + 다크/라이트 폴리시

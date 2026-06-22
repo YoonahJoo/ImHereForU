@@ -13,7 +13,7 @@ export function useFocusTimer(
   durationMinutes: number = 25,
   onComplete: () => void
 ): UseFocusTimerResult {
-  const totalSeconds = durationMinutes * 60
+  const totalSeconds = Math.round(durationMinutes * 60)
   const [status, setStatus] = useState<SessionStatus>('idle')
   const [remainingSeconds, setRemainingSeconds] = useState(totalSeconds)
 

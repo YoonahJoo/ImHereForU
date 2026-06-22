@@ -21,6 +21,7 @@ import {
   sulkyFocusModeReleaseMessage,
   idleWakePromptMessage,
   idleWakeResponseMessage,
+  timeBasedMessages,
   getRandomMessage,
 } from '../../data/messages'
 import { useTimeBased } from '../../hooks/useTimeBased'
@@ -190,17 +191,46 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
 
   // ── 앱 시작 인삿말 (순차 말풍선) ─────────────────────────
   useEffect(() => {
+    const tod = getTimeOfDay()
     setExpression('wave')
-    const t1 = setTimeout(() => showBubble("Hey, babe! It's lovely to have you here <3"), 300)
-    const t2 = setTimeout(() => showBubble("This is my tiny cozy space."), 2300)
-    const t3 = setTimeout(() => showBubble("Click the bouquet below if you wanna know more about this app!"), 4300)
-    const t4 = setTimeout(() => {
-      greetingActive.current = false
-      setExpression('idle')
-    }, 7500)
-    return () => {
-      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4)
+
+    const timers: ReturnType<typeof setTimeout>[] = []
+    const after = (ms: number, fn: () => void) => {
+      const t = setTimeout(fn, ms)
+      timers.push(t)
     }
+
+    if (tod === 'morning' || tod === 'afternoon' || tod === 'evening') {
+      // 시간대 인사 → lovely → cozy → bouquet → idle
+      const greetingText = timeBasedMessages[tod].text
+      after(300,  () => showBubble(greetingText))
+      after(2300, () => showBubble("It's lovely to see you here <3"))
+      after(4300, () => showBubble("This is my tiny cozy space."))
+      after(6300, () => showBubble("Click the bouquet below if you wanna know more about this app!"))
+      after(9300, () => { greetingActive.current = false; setExpression('idle') })
+    } else if (tod === 'night') {
+      // 기본 인사 → cozy → bouquet → sleepy 경고 → idle
+      after(300,  () => showBubble("Hey, babe! It's lovely to see you here <3"))
+      after(2300, () => showBubble("This is my tiny cozy space."))
+      after(4300, () => showBubble("Click the bouquet below if you wanna know more about this app!"))
+      after(7500, () => {
+        setExpression('sleepy')
+        showBubble(timeBasedMessages.night.text)
+      })
+      after(10500, () => { greetingActive.current = false; setExpression('idle') })
+    } else {
+      // dawn: 기본 인사 → cozy → bouquet → sulky 경고 → idle
+      after(300,  () => showBubble("Hey, babe! It's lovely to see you here <3"))
+      after(2300, () => showBubble("This is my tiny cozy space."))
+      after(4300, () => showBubble("Click the bouquet below if you wanna know more about this app!"))
+      after(7500, () => {
+        setExpression('sulky_daily_mode')
+        showBubble(timeBasedMessages.dawn.text)
+      })
+      after(10500, () => { greetingActive.current = false; setExpression('idle') })
+    }
+
+    return () => timers.forEach(clearTimeout)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -272,14 +302,15 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
     if (expression === 'sleepy') {
       if (idlePromptTimer.current) clearTimeout(idlePromptTimer.current)
       if (exprTimer.current) clearTimeout(exprTimer.current)
-      setExpression('idle')
+      setExpression('smile')
       showBubble(idleWakeResponseMessage)
+      exprTimer.current = setTimeout(() => setExpression('idle'), 3000)
       resetIdle() // 방치 타이머 재시작 → 반복 사이클
       return
     }
 
     setHasClickedChar(true)
-    resetIdle()
+    if (timerStatus !== 'running') resetIdle()
     if (exprTimer.current) clearTimeout(exprTimer.current)
 
     if (mode === 'daily') {
@@ -303,7 +334,7 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
   }
 
   function handleDoubleClick() {
-    resetIdle()
+    if (timerStatus !== 'running') resetIdle()
     if (exprTimer.current) clearTimeout(exprTimer.current)
 
     if (timerStatus === 'running') {
@@ -328,7 +359,7 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
   }
 
   function handleLongPress() {
-    resetIdle()
+    if (timerStatus !== 'running') resetIdle()
     if (exprTimer.current) clearTimeout(exprTimer.current)
     if (timerStatus !== 'running') {
       setExpression('sulky_daily_mode')
@@ -447,11 +478,9 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
 
         {newGift && (
           <div className="gift-notification">
+            <span className="gift-notif-congrats">Congrats!</span>
+            <span className="gift-notif-sub">you got {newGift.name}!</span>
             <span className="gift-notif-emoji">{newGift.emoji}</span>
-            <div className="gift-notif-text">
-              <span className="gift-notif-name">{newGift.name}</span>
-              <span className="gift-notif-sub">를 받았어요!</span>
-            </div>
           </div>
         )}
       </div>
