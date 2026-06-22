@@ -24,3 +24,8 @@ dist-ssr
 *.sw?
 dist-electron/
 release/
+
+# Private docs
+docs/character-assets.md
+docs/phase-log.md
+docs/project-components.md
