@@ -43,6 +43,10 @@ function createWindow() {
 
   win.setMenuBarVisibility(false)
   loadRenderer(win, 'index.html')
+
+  win.on('closed', () => {
+    win = null
+  })
 }
 
 // ── v3.0: transparent full-screen overlay for the desktop-mate ────────
@@ -122,7 +126,12 @@ ipcMain.on('overlay:set-theme', (_, theme) => {
 ipcMain.on('overlay:enter-character', () => {
   stopCursorPoll()
   overlayWin?.hide()
-  win?.webContents.send('book:character-entered')
+  if (!win || win.isDestroyed()) {
+    // The book was closed while she was out — reopen it so she has a home.
+    createWindow()
+  } else {
+    win.webContents.send('book:character-entered')
+  }
 })
 
 // ── IPC: cursor following (polled only while the overlay wants it) ────
@@ -153,7 +162,7 @@ ipcMain.on('overlay:set-following', (_, on: boolean) => {
 
 // ── IPC: book window keeps its own size control (unchanged) ───────────
 ipcMain.on('resize-window', (_, { width, height }: { width: number; height: number }) => {
-  if (win) win.setSize(width, height)
+  if (win && !win.isDestroyed()) win.setSize(width, height)
 })
 
 app.on('window-all-closed', () => {
