@@ -61,9 +61,16 @@ export function OverlayApp() {
     isTimerRunningRef.current = isTimerRunning
   }, [isTimerRunning])
 
-  // The desktop pet always rests in the neutral idle/daily pose — it doesn't
-  // inherit the book's focus pose (focus reactions are still transient).
-  const restExpression = (): Expression => 'idle'
+  // Resting pose follows the actual focus-timer state: focus_mode while a
+  // session runs, idle otherwise. (We don't inherit the book's transient
+  // expressions like cheering — only the running/not-running fact.)
+  const restExpression = (): Expression => (isTimerRunningRef.current ? 'focus_mode' : 'idle')
+
+  // Keep the resting pose in sync if the timer flips while she's out
+  // (e.g. the focus session completes on the desktop).
+  useEffect(() => {
+    setExpression(isTimerRunning ? 'focus_mode' : 'idle')
+  }, [isTimerRunning])
 
   function showBubble(message: string) {
     if (bubbleTimer.current) clearTimeout(bubbleTimer.current)
@@ -136,10 +143,11 @@ export function OverlayApp() {
   // ── IPC from the main process / book ──────────────────────────────────
   useEffect(() => {
     const offShow = window.ipcRenderer.on('overlay:show', (_e, payload?: ExitPayload) => {
-      // Always step out in the neutral default pose, regardless of what the
-      // book was showing (focus/cheering/sleepy etc.).
-      setExpression('idle')
-      if (typeof payload?.isTimerRunning === 'boolean') setIsTimerRunning(payload.isTimerRunning)
+      // Step out reflecting the focus-timer state (focus_mode if a session is
+      // running, idle otherwise) — but ignore the book's transient expressions.
+      const running = payload?.isTimerRunning === true
+      setIsTimerRunning(running)
+      setExpression(running ? 'focus_mode' : 'idle')
       if (payload?.theme) setTheme(payload.theme)
       setCharOffset({ x: 0, y: 0 })
       wasOverRef.current = false // start fresh; not hovering until proven otherwise
