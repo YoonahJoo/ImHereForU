@@ -138,6 +138,7 @@ export function OverlayApp() {
       if (typeof payload?.isTimerRunning === 'boolean') setIsTimerRunning(payload.isTimerRunning)
       if (payload?.theme) setTheme(payload.theme)
       setCharOffset({ x: 0, y: 0 })
+      wasOverRef.current = false // start fresh; not hovering until proven otherwise
       setPhase('enter') // restart the pop-in on every step-out
       setVisible(true)
     })
@@ -242,11 +243,18 @@ export function OverlayApp() {
   }
 
   // 🏠 button — play the pop-out, then ask main to hide the window.
+  // setVisible(false) unmounts Character so its internal drag offset resets;
+  // otherwise the next step-out would show the bubble at offset 0 while the
+  // character still sits at the old dragged offset (bubble appears detached
+  // until the next drag re-syncs them).
   function handleReturnHome(e: React.MouseEvent) {
     e.stopPropagation()
     if (phase === 'leaving') return
     setPhase('leaving')
-    window.setTimeout(() => window.ipcRenderer.send('overlay:enter-character'), LEAVE_MS)
+    window.setTimeout(() => {
+      window.ipcRenderer.send('overlay:enter-character')
+      setVisible(false)
+    }, LEAVE_MS)
   }
 
   if (!visible) return <div className={`overlay-app theme-${theme}`} />

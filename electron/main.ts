@@ -108,6 +108,9 @@ ipcMain.on('book:exit-character', (_, payload) => {
     ? screen.getDisplayMatching(win.getBounds())
     : screen.getPrimaryDisplay()
   overlayWin.setBounds(target.bounds)
+  // Re-arm pass-through every time she steps out (a prior hover may have left
+  // it disabled, which would otherwise block clicks across the whole screen).
+  overlayWin.setIgnoreMouseEvents(true, { forward: true })
   overlayWin.showInactive() // become visible without stealing focus
   overlayWin.webContents.send('overlay:show', payload)
   // The book "disappears" the moment she's out on the desktop.
