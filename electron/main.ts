@@ -110,6 +110,8 @@ ipcMain.on('book:exit-character', (_, payload) => {
   overlayWin.setBounds(target.bounds)
   overlayWin.showInactive() // become visible without stealing focus
   overlayWin.webContents.send('overlay:show', payload)
+  // The book "disappears" the moment she's out on the desktop.
+  win?.hide()
 })
 
 // Book relays timer / theme changes while the character is out. (Expression
@@ -121,15 +123,17 @@ ipcMain.on('overlay:set-theme', (_, theme) => {
   overlayWin?.webContents.send('overlay:set-theme', theme)
 })
 
-// Overlay asks to send the character back into the book (come home).
+// Overlay asks to send the character back into the book (come home):
+// reveal the book first (with the character settling in), then hide the overlay.
 ipcMain.on('overlay:enter-character', () => {
-  overlayWin?.hide()
   if (!win || win.isDestroyed()) {
     // The book was closed while she was out — reopen it so she has a home.
     createWindow()
   } else {
     win.webContents.send('book:character-entered')
+    win.show()
   }
+  overlayWin?.hide()
 })
 
 // ── IPC: book window keeps its own size control (unchanged) ───────────

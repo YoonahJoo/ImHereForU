@@ -1,4 +1,11 @@
 /* ── Overlay window: fully transparent, fills the screen ── */
+/* Match the book renderer's base font so text looks identical out here. */
+*,
+*::before,
+*::after {
+  font-family: 'Patrick Hand', cursive;
+}
+
 html,
 body,
 #overlay-root {

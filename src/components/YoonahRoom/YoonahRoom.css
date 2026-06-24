@@ -162,39 +162,25 @@
   filter: brightness(1.05);
 }
 
-/* ── v3.0: 캐릭터가 나가 있을 때 안내 ── */
-.character-away-note {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  text-align: center;
-  padding: 0 16px;
-  color: rgba(90, 78, 64, 0.85);
-  font-family: 'Patrick Hand', cursive;
-  pointer-events: none;
-  user-select: none;
+/* ── v3.0: 귀가 시 책 캐릭터가 쏙 들어오는 팝 모션 ── */
+.room-stage.book-char-entering {
+  animation: bookCharEnter 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: center center;
 }
 
-.theme-dark .character-away-note {
-  color: rgba(228, 222, 212, 0.85);
-}
-
-.character-away-note .away-emoji {
-  font-size: 40px;
-}
-
-.character-away-note .away-title {
-  font-size: 18px;
-}
-
-.character-away-note .away-hint {
-  font-size: 14px;
-  opacity: 0.7;
+@keyframes bookCharEnter {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* ── Focus 타이머 창 ── */

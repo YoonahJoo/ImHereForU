@@ -84,6 +84,8 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
   const [timerPos, setTimerPos] = useState<{ x: number; y: number } | null>(null)
   // v3.0: when true, the character has stepped out onto the desktop overlay.
   const [isCharacterOut, setIsCharacterOut] = useState(false)
+  // brief pop-in when she returns into the book
+  const [bookCharEntering, setBookCharEntering] = useState(false)
 
   const roomRef = useRef<HTMLDivElement>(null)
   const timerWindowRef = useRef<HTMLDivElement>(null)
@@ -320,13 +322,25 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
     if (isCharacterOut) window.ipcRenderer.send('overlay:set-theme', previewTheme)
   }, [previewTheme, isCharacterOut])
 
-  // 오버레이에서 귀가하면(더블클릭) 책 안 캐릭터를 다시 표시
+  // 오버레이에서 귀가하면 책 안 캐릭터를 다시 표시
   useEffect(() => {
     const off = window.ipcRenderer.on('book:character-entered', () => {
       setIsCharacterOut(false)
     })
     return off
   }, [])
+
+  // 귀가 순간(나가있음 → 들어옴) 책 캐릭터가 쏙 들어오는 팝 모션
+  const wasOutRef = useRef(false)
+  useEffect(() => {
+    const wasOut = wasOutRef.current
+    wasOutRef.current = isCharacterOut
+    if (wasOut && !isCharacterOut) {
+      setBookCharEntering(true)
+      const t = setTimeout(() => setBookCharEntering(false), 600)
+      return () => clearTimeout(t)
+    }
+  }, [isCharacterOut])
 
   // ── 인터랙션 핸들러 ───────────────────────────────────────
   function handleClick() {
@@ -495,39 +509,29 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
       )}
 
       {/* 캐릭터 스테이지 (왼쪽 페이지) */}
-      <div className="room-stage">
-        {isCharacterOut ? (
-          <div className="character-away-note">
-            <span className="away-emoji">🌿</span>
-            <span className="away-title">Yoonah is out on your desktop</span>
-            <span className="away-hint">drag her anywhere · tap the 🏠 above her to call her home</span>
-          </div>
-        ) : (
-          <>
-            <SpeechBubble message={bubbleMessage} visible={isBubbleVisible} offsetX={charOffset.x} offsetY={charOffset.y} />
-            <Character
-              mode={mode}
-              expression={expression}
-              isTimerRunning={timerStatus === 'running'}
-              onExpressionChange={(expr) => {
-                if (expr === 'dragging_daily_mode') showBubble('where am I going?')
-                else if (expr === 'dragging_focus_mode') showBubble('Oops!')
-                setExpression(expr)
-              }}
-              onClick={handleClick}
-              onDoubleClick={handleDoubleClick}
-              onLongPress={handleLongPress}
-              onLongPressRelease={handleLongPressRelease}
-              onOffsetChange={(x, y) => setCharOffset({ x, y })}
-            />
-            <HeartEffect hearts={hearts} offsetX={charOffset.x} offsetY={charOffset.y} />
+      <div className={`room-stage${bookCharEntering ? ' book-char-entering' : ''}`}>
+        <SpeechBubble message={bubbleMessage} visible={isBubbleVisible} offsetX={charOffset.x} offsetY={charOffset.y} />
+        <Character
+          mode={mode}
+          expression={expression}
+          isTimerRunning={timerStatus === 'running'}
+          onExpressionChange={(expr) => {
+            if (expr === 'dragging_daily_mode') showBubble('where am I going?')
+            else if (expr === 'dragging_focus_mode') showBubble('Oops!')
+            setExpression(expr)
+          }}
+          onClick={handleClick}
+          onDoubleClick={handleDoubleClick}
+          onLongPress={handleLongPress}
+          onLongPressRelease={handleLongPressRelease}
+          onOffsetChange={(x, y) => setCharOffset({ x, y })}
+        />
+        <HeartEffect hearts={hearts} offsetX={charOffset.x} offsetY={charOffset.y} />
 
-            {!isBubbleVisible && !hasClickedChar && (
-              <div className="character-hint">
-                {mode === 'daily' ? 'Click me!' : "Let's focus together"}
-              </div>
-            )}
-          </>
+        {!isBubbleVisible && !hasClickedChar && (
+          <div className="character-hint">
+            {mode === 'daily' ? 'Click me!' : "Let's focus together"}
+          </div>
         )}
 
         {newGift && (
