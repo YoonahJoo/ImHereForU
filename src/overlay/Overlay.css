@@ -38,3 +38,26 @@ body,
   cursor: grab;
 }
 
+/* ── Step-out / come-home transition (pop in & out) ── */
+.overlay-char-fx {
+  transform-origin: center bottom;
+  transition:
+    transform 0.34s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.3s ease;
+}
+
+.overlay-char-fx.phase-enter {
+  transform: scale(0.5);
+  opacity: 0;
+}
+
+.overlay-char-fx.phase-shown {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.overlay-char-fx.phase-leaving {
+  transform: scale(0.5);
+  opacity: 0;
+}
+

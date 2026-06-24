@@ -98,16 +98,24 @@ ipcMain.on('overlay:cursor-off-character', () => {
 // Book asks the character to step out onto the desktop.
 ipcMain.on('book:exit-character', (_, payload) => {
   if (!overlayWin) return
+  // Cover the display the book currently lives on (multi-monitor friendly).
+  const target = win
+    ? screen.getDisplayMatching(win.getBounds())
+    : screen.getPrimaryDisplay()
+  overlayWin.setBounds(target.bounds)
   overlayWin.showInactive() // become visible without stealing focus
   overlayWin.webContents.send('overlay:show', payload)
 })
 
-// Book relays expression / timer changes while the character is out.
+// Book relays expression / timer / theme changes while the character is out.
 ipcMain.on('overlay:set-expression', (_, expr) => {
   overlayWin?.webContents.send('overlay:set-expression', expr)
 })
 ipcMain.on('overlay:set-timer', (_, running) => {
   overlayWin?.webContents.send('overlay:set-timer', running)
+})
+ipcMain.on('overlay:set-theme', (_, theme) => {
+  overlayWin?.webContents.send('overlay:set-theme', theme)
 })
 
 // Overlay asks to send the character back into the book (come home).

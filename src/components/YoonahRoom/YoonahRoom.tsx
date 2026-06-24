@@ -306,6 +306,7 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
       expression,
       isTimerRunning: timerStatus === 'running',
       mode,
+      theme: previewTheme,
     })
   }
 
@@ -318,6 +319,11 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
   useEffect(() => {
     if (isCharacterOut) window.ipcRenderer.send('overlay:set-timer', timerStatus === 'running')
   }, [timerStatus, isCharacterOut])
+
+  // 테마(라이트/다크)도 오버레이로 동기화
+  useEffect(() => {
+    if (isCharacterOut) window.ipcRenderer.send('overlay:set-theme', previewTheme)
+  }, [previewTheme, isCharacterOut])
 
   // 오버레이에서 귀가하면(더블클릭) 책 안 캐릭터를 다시 표시
   useEffect(() => {

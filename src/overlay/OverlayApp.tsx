@@ -6,7 +6,11 @@ interface ExitPayload {
   expression?: Expression
   isTimerRunning?: boolean
   mode?: AppMode
+  theme?: 'light' | 'dark'
 }
+
+type FxPhase = 'enter' | 'shown' | 'leaving'
+const LEAVE_MS = 340 // matches the pop-out transition in Overlay.css
 
 // Geometry / motion tuning
 const ANCHOR_SIZE = 240
@@ -36,6 +40,8 @@ export function OverlayApp() {
   const [isTimerRunning, setIsTimerRunning] = useState(false)
   const [following, setFollowing] = useState(false)
   const [pos, setPos] = useState({ x: 0, y: 0 })
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const [phase, setPhase] = useState<FxPhase>('enter')
 
   const anchorRef = useRef<HTMLDivElement>(null)
   const wasOverRef = useRef(false)
@@ -164,9 +170,14 @@ export function OverlayApp() {
       if (payload?.expression) setExpression(payload.expression)
       if (typeof payload?.isTimerRunning === 'boolean') setIsTimerRunning(payload.isTimerRunning)
       if (payload?.mode) setMode(payload.mode)
+      if (payload?.theme) setTheme(payload.theme)
+      setPhase('enter') // restart the pop-in on every step-out
       setVisible(true)
     })
     const offHide = window.ipcRenderer.on('overlay:hide', () => setVisible(false))
+    const offTheme = window.ipcRenderer.on('overlay:set-theme', (_e, t: 'light' | 'dark') =>
+      setTheme(t),
+    )
     const offExpr = window.ipcRenderer.on('overlay:set-expression', (_e, expr: Expression) =>
       setExpression(expr),
     )
@@ -179,16 +190,31 @@ export function OverlayApp() {
     return () => {
       offShow()
       offHide()
+      offTheme()
       offExpr()
       offTimer()
       offPos()
     }
   }, [])
 
-  // Double-click the desktop character to send her back into the book.
+  // Drive the pop-in: flip 'enter' → 'shown' on the next frame so the CSS
+  // transition runs from the small/transparent initial state.
+  useEffect(() => {
+    if (visible && phase === 'enter') {
+      const raf = requestAnimationFrame(() => setPhase('shown'))
+      return () => cancelAnimationFrame(raf)
+    }
+  }, [visible, phase])
+
+  // Double-click the desktop character to send her back into the book —
+  // play the pop-out first, then ask the main process to hide the window.
   function handleReturnHome() {
+    if (phase === 'leaving') return
     setFollow(false)
-    window.ipcRenderer.send('overlay:enter-character')
+    setPhase('leaving')
+    window.setTimeout(() => {
+      window.ipcRenderer.send('overlay:enter-character')
+    }, LEAVE_MS)
   }
 
   function handleMouseDownCapture(e: React.MouseEvent) {
@@ -204,10 +230,10 @@ export function OverlayApp() {
     }
   }
 
-  if (!visible) return <div className="overlay-app" />
+  if (!visible) return <div className={`overlay-app theme-${theme}`} />
 
   return (
-    <div className="overlay-app">
+    <div className={`overlay-app theme-${theme}`}>
       <div
         ref={anchorRef}
         className={`overlay-char-anchor${following ? ' is-following' : ''}`}
@@ -215,17 +241,19 @@ export function OverlayApp() {
         onMouseDownCapture={handleMouseDownCapture}
         onDoubleClick={handleReturnHome}
       >
-        <Character
-          mode={mode}
-          expression={expression}
-          isTimerRunning={isTimerRunning}
-          onExpressionChange={setExpression}
-          onClick={() => {}}
-          onDoubleClick={() => {}}
-          onLongPress={() => {}}
-          onLongPressRelease={() => {}}
-          onOffsetChange={() => {}}
-        />
+        <div className={`overlay-char-fx phase-${phase}`}>
+          <Character
+            mode={mode}
+            expression={expression}
+            isTimerRunning={isTimerRunning}
+            onExpressionChange={setExpression}
+            onClick={() => {}}
+            onDoubleClick={() => {}}
+            onLongPress={() => {}}
+            onLongPressRelease={() => {}}
+            onOffsetChange={() => {}}
+          />
+        </div>
       </div>
     </div>
   )
