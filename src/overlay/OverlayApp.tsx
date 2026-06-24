@@ -61,7 +61,9 @@ export function OverlayApp() {
     isTimerRunningRef.current = isTimerRunning
   }, [isTimerRunning])
 
-  const restExpression = (): Expression => (isTimerRunningRef.current ? 'focus_mode' : 'idle')
+  // The desktop pet always rests in the neutral idle/daily pose — it doesn't
+  // inherit the book's focus pose (focus reactions are still transient).
+  const restExpression = (): Expression => 'idle'
 
   function showBubble(message: string) {
     if (bubbleTimer.current) clearTimeout(bubbleTimer.current)
@@ -134,7 +136,9 @@ export function OverlayApp() {
   // ── IPC from the main process / book ──────────────────────────────────
   useEffect(() => {
     const offShow = window.ipcRenderer.on('overlay:show', (_e, payload?: ExitPayload) => {
-      if (payload?.expression) setExpression(payload.expression)
+      // Always step out in the neutral default pose, regardless of what the
+      // book was showing (focus/cheering/sleepy etc.).
+      setExpression('idle')
       if (typeof payload?.isTimerRunning === 'boolean') setIsTimerRunning(payload.isTimerRunning)
       if (payload?.theme) setTheme(payload.theme)
       setCharOffset({ x: 0, y: 0 })
