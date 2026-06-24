@@ -1,0 +1,34 @@
+/* ── Overlay window: fully transparent, fills the screen ── */
+html,
+body,
+#overlay-root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+  overflow: hidden;
+  /* The window itself handles mouse pass-through via setIgnoreMouseEvents,
+     so the renderer never needs its own backdrop. */
+}
+
+.overlay-app {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+  pointer-events: none; /* visual layer only; OS-level passthrough is authoritative */
+}
+
+/* ── Character anchor: positioned box the character centers within ── */
+.overlay-char-anchor {
+  position: absolute;
+  width: 240px;
+  height: 240px;
+  /* position is driven by transform from OverlayApp (translate) */
+  will-change: transform;
+}
+
+/* The character image must be interactive when the cursor is over it. */
+.overlay-char-anchor .character-wrapper {
+  pointer-events: auto;
+}

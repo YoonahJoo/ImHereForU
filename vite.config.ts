@@ -5,6 +5,16 @@ import react from '@vitejs/plugin-react'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      input: {
+        // Book window (existing main app)
+        index: path.join(__dirname, 'index.html'),
+        // Transparent desktop-mate overlay window (v3.0)
+        overlay: path.join(__dirname, 'overlay.html'),
+      },
+    },
+  },
   plugins: [
     react(),
     electron({
