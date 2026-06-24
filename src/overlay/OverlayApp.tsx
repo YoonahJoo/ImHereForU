@@ -1,6 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import type { AppMode, Expression } from '../types'
 import { Character } from '../components/Character/Character'
+import { SpeechBubble } from '../components/Character/SpeechBubble'
+import { HeartEffect, type Heart } from '../components/Character/HeartEffect'
+import {
+  dailyMessages,
+  focusMessages,
+  focusCheeringMessages,
+  sulkyMessages,
+  sulkyDailyReleaseMessage,
+  sulkyFocusModeHoldMessage,
+  sulkyFocusModeReleaseMessage,
+  getRandomMessage,
+} from '../data/messages'
 
 interface ExitPayload {
   expression?: Expression
@@ -11,90 +23,84 @@ interface ExitPayload {
 
 type FxPhase = 'enter' | 'shown' | 'leaving'
 const LEAVE_MS = 340 // matches the pop-out transition in Overlay.css
-
-// Geometry / motion tuning
-const ANCHOR_SIZE = 240
-const HALF = ANCHOR_SIZE / 2
-const LERP = 0.12 // follow easing (lower = lazier)
-const DEADZONE = 150 // stop following once this close to the cursor (px)
-const DRAG_THRESHOLD = 5 // px before a press counts as a drag
 const HIT_INSET = 0.18 // shrink the clickable box toward the visible body
-
-function clamp(v: number, min: number, max: number) {
-  return Math.max(min, Math.min(v, max))
-}
 
 /**
  * OverlayApp — renderer for the transparent, full-screen desktop-mate window.
  *
- *  - M1: render the shared Character + toggle OS-level mouse pass-through while
- *    the cursor is over the character.
- *  - M2: show/hide on book triggers; expression + timer synced from the book.
- *  - M3: drag to reposition, click to toggle cursor-following (lerp with a
- *    dead-zone so she stays grabbable), double-click to send her home.
+ * The desktop character stays where you drag her (no cursor-following) and
+ * reacts to clicks just like she does inside the book. A 🏠 button above her
+ * sends her home. Expression is owned locally so desktop interactions aren't
+ * overridden by the book; only timer + theme are synced in.
  */
 export function OverlayApp() {
   const [visible, setVisible] = useState(false)
   const [expression, setExpression] = useState<Expression>('idle')
-  const [mode, setMode] = useState<AppMode>('daily')
+  const [mode] = useState<AppMode>('daily')
   const [isTimerRunning, setIsTimerRunning] = useState(false)
-  const [following, setFollowing] = useState(false)
-  const [pos, setPos] = useState({ x: 0, y: 0 })
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [phase, setPhase] = useState<FxPhase>('enter')
 
+  const [bubbleMessage, setBubbleMessage] = useState('')
+  const [bubbleVisible, setBubbleVisible] = useState(false)
+  const [hearts, setHearts] = useState<Heart[]>([])
+  const [charOffset, setCharOffset] = useState({ x: 0, y: 0 })
+  // Fixed anchor position (top-left of the 240px box). She stays here unless
+  // dragged; dragging moves her via Character's own offset (charOffset).
+  const [pos, setPos] = useState({ x: 0, y: 0 })
+
   const anchorRef = useRef<HTMLDivElement>(null)
+  const homeBtnRef = useRef<HTMLButtonElement>(null)
   const wasOverRef = useRef(false)
+  const isTimerRunningRef = useRef(false)
+  const bubbleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const exprTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const heartTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Live refs read inside the rAF loop / global listeners.
-  const posRef = useRef({ x: 0, y: 0 })
-  const cursorRef = useRef({ x: 0, y: 0 })
-  const followingRef = useRef(false)
-  const visibleRef = useRef(false)
-  const dragRef = useRef({ active: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 })
+  useEffect(() => {
+    isTimerRunningRef.current = isTimerRunning
+  }, [isTimerRunning])
 
-  const applyPos = (x: number, y: number) => {
-    posRef.current = { x, y }
-    setPos({ x, y })
+  const restExpression = (): Expression => (isTimerRunningRef.current ? 'focus_mode' : 'idle')
+
+  function showBubble(message: string) {
+    if (bubbleTimer.current) clearTimeout(bubbleTimer.current)
+    setBubbleMessage(message)
+    setBubbleVisible(true)
+    bubbleTimer.current = setTimeout(() => setBubbleVisible(false), 3000)
   }
 
-  const setFollow = (on: boolean) => {
-    followingRef.current = on
-    setFollowing(on)
-    window.ipcRenderer.send('overlay:set-following', on)
+  function revertSoon(ms: number) {
+    if (exprTimer.current) clearTimeout(exprTimer.current)
+    exprTimer.current = setTimeout(() => setExpression(restExpression()), ms)
   }
 
+  // ── Hit-detection: pass-through toggles off only over the character or the
+  //    home button; frozen mid-press so a drag never loses its mouse stream ──
   useEffect(() => {
-    visibleRef.current = visible
-  }, [visible])
+    let interacting = false
 
-  // Initial placement: lower-right area of the overlay.
-  useEffect(() => {
-    const place = () => {
-      const x = clamp(window.innerWidth - ANCHOR_SIZE - 60, 0, window.innerWidth - ANCHOR_SIZE)
-      const y = clamp(window.innerHeight - ANCHOR_SIZE - 80, 0, window.innerHeight - ANCHOR_SIZE)
-      if (!dragRef.current.active && !followingRef.current) applyPos(x, y)
-    }
-    place()
-    window.addEventListener('resize', place)
-    return () => window.removeEventListener('resize', place)
-  }, [])
-
-  // Hit-detection: toggle pass-through as the cursor enters/leaves the visible
-  // body (inset box). forward:true keeps mousemove flowing while ignoring.
-  useEffect(() => {
-    function onMove(e: MouseEvent) {
-      const rect = visible ? anchorRef.current?.getBoundingClientRect() : undefined
-      let isOver = false
-      if (rect) {
-        const ix = rect.width * HIT_INSET
-        const iy = rect.height * HIT_INSET
-        isOver =
-          e.clientX >= rect.left + ix &&
-          e.clientX <= rect.right - ix &&
-          e.clientY >= rect.top + iy &&
-          e.clientY <= rect.bottom - iy
+    function overInteractive(x: number, y: number) {
+      const charEl = anchorRef.current?.querySelector('.character-wrapper')
+      const cr = charEl?.getBoundingClientRect()
+      let over = false
+      if (cr && cr.width > 0) {
+        const ix = cr.width * HIT_INSET
+        const iy = cr.height * HIT_INSET
+        over =
+          x >= cr.left + ix && x <= cr.right - ix && y >= cr.top + iy && y <= cr.bottom - iy
       }
+      if (!over) {
+        const hr = homeBtnRef.current?.getBoundingClientRect()
+        if (hr && hr.width > 0) {
+          over = x >= hr.left && x <= hr.right && y >= hr.top && y <= hr.bottom
+        }
+      }
+      return over
+    }
+
+    function evaluate(x: number, y: number) {
+      const isOver = visible && overInteractive(x, y)
       if (isOver !== wasOverRef.current) {
         wasOverRef.current = isOver
         window.ipcRenderer.send(
@@ -102,103 +108,67 @@ export function OverlayApp() {
         )
       }
     }
+
+    function onMove(e: MouseEvent) {
+      if (interacting) return // keep events flowing for the whole drag
+      evaluate(e.clientX, e.clientY)
+    }
+    function onDown() {
+      if (wasOverRef.current) interacting = true
+    }
+    function onUp(e: MouseEvent) {
+      interacting = false
+      evaluate(e.clientX, e.clientY)
+    }
+
     window.addEventListener('mousemove', onMove)
-    return () => window.removeEventListener('mousemove', onMove)
-  }, [visible])
-
-  // ── Drag to reposition (capture on the anchor so Character's own drag
-  //    logic never runs on the overlay) ─────────────────────────────────
-  useEffect(() => {
-    function onMouseMove(e: MouseEvent) {
-      const d = dragRef.current
-      if (!d.active) return
-      const dx = e.clientX - d.sx
-      const dy = e.clientY - d.sy
-      if (!d.moved && Math.hypot(dx, dy) >= DRAG_THRESHOLD) {
-        d.moved = true
-        if (followingRef.current) setFollow(false) // grabbing stops following
-      }
-      if (d.moved) {
-        const nx = clamp(d.ox + dx, 0, window.innerWidth - ANCHOR_SIZE)
-        const ny = clamp(d.oy + dy, 0, window.innerHeight - ANCHOR_SIZE)
-        applyPos(nx, ny)
-      }
-    }
-    function onMouseUp() {
-      const d = dragRef.current
-      if (!d.active) return
-      d.active = false
-      if (!d.moved) setFollow(!followingRef.current) // tap toggles following
-    }
-    window.addEventListener('mousemove', onMouseMove)
-    window.addEventListener('mouseup', onMouseUp)
+    window.addEventListener('mousedown', onDown)
+    window.addEventListener('mouseup', onUp)
     return () => {
-      window.removeEventListener('mousemove', onMouseMove)
-      window.removeEventListener('mouseup', onMouseUp)
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mousedown', onDown)
+      window.removeEventListener('mouseup', onUp)
     }
-  }, [])
-
-  // ── Follow loop: lerp toward the cursor, freezing within the dead-zone ──
-  useEffect(() => {
-    let raf = 0
-    const tick = () => {
-      const d = dragRef.current
-      if (visibleRef.current && followingRef.current && !d.active) {
-        const p = posRef.current
-        const cx = p.x + HALF
-        const cy = p.y + HALF
-        const dist = Math.hypot(cursorRef.current.x - cx, cursorRef.current.y - cy)
-        if (dist > DEADZONE) {
-          const tx = cursorRef.current.x - HALF
-          const ty = cursorRef.current.y - HALF
-          let nx = p.x + (tx - p.x) * LERP
-          let ny = p.y + (ty - p.y) * LERP
-          nx = clamp(nx, 0, window.innerWidth - ANCHOR_SIZE)
-          ny = clamp(ny, 0, window.innerHeight - ANCHOR_SIZE)
-          if (Math.abs(nx - p.x) > 0.1 || Math.abs(ny - p.y) > 0.1) applyPos(nx, ny)
-        }
-      }
-      raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [])
+  }, [visible])
 
   // ── IPC from the main process / book ──────────────────────────────────
   useEffect(() => {
     const offShow = window.ipcRenderer.on('overlay:show', (_e, payload?: ExitPayload) => {
       if (payload?.expression) setExpression(payload.expression)
       if (typeof payload?.isTimerRunning === 'boolean') setIsTimerRunning(payload.isTimerRunning)
-      if (payload?.mode) setMode(payload.mode)
       if (payload?.theme) setTheme(payload.theme)
+      setCharOffset({ x: 0, y: 0 })
       setPhase('enter') // restart the pop-in on every step-out
       setVisible(true)
     })
     const offHide = window.ipcRenderer.on('overlay:hide', () => setVisible(false))
-    const offTheme = window.ipcRenderer.on('overlay:set-theme', (_e, t: 'light' | 'dark') =>
-      setTheme(t),
-    )
-    const offExpr = window.ipcRenderer.on('overlay:set-expression', (_e, expr: Expression) =>
-      setExpression(expr),
-    )
     const offTimer = window.ipcRenderer.on('overlay:set-timer', (_e, running: boolean) =>
       setIsTimerRunning(running),
     )
-    const offPos = window.ipcRenderer.on('overlay:set-position', (_e, p: { x: number; y: number }) => {
-      cursorRef.current = p
-    })
+    const offTheme = window.ipcRenderer.on('overlay:set-theme', (_e, t: 'light' | 'dark') =>
+      setTheme(t),
+    )
     return () => {
       offShow()
       offHide()
-      offTheme()
-      offExpr()
       offTimer()
-      offPos()
+      offTheme()
     }
   }, [])
 
-  // Drive the pop-in: flip 'enter' → 'shown' on the next frame so the CSS
-  // transition runs from the small/transparent initial state.
+  // Place her in the lower-right when she first steps out (and on resize).
+  useEffect(() => {
+    const place = () =>
+      setPos({
+        x: Math.max(0, window.innerWidth - 240 - 60),
+        y: Math.max(0, window.innerHeight - 240 - 80),
+      })
+    place()
+    window.addEventListener('resize', place)
+    return () => window.removeEventListener('resize', place)
+  }, [])
+
+  // Drive the pop-in: flip 'enter' → 'shown' on the next frame.
   useEffect(() => {
     if (visible && phase === 'enter') {
       const raf = requestAnimationFrame(() => setPhase('shown'))
@@ -206,28 +176,77 @@ export function OverlayApp() {
     }
   }, [visible, phase])
 
-  // Double-click the desktop character to send her back into the book —
-  // play the pop-out first, then ask the main process to hide the window.
-  function handleReturnHome() {
-    if (phase === 'leaving') return
-    setFollow(false)
-    setPhase('leaving')
-    window.setTimeout(() => {
-      window.ipcRenderer.send('overlay:enter-character')
-    }, LEAVE_MS)
+  // Cleanup timers on unmount.
+  useEffect(() => {
+    return () => {
+      if (bubbleTimer.current) clearTimeout(bubbleTimer.current)
+      if (exprTimer.current) clearTimeout(exprTimer.current)
+      if (heartTimer.current) clearTimeout(heartTimer.current)
+    }
+  }, [])
+
+  // ── Interactions — same vibe as the book ──────────────────────────────
+  function handleClick() {
+    if (isTimerRunningRef.current) {
+      showBubble(getRandomMessage(focusMessages).text)
+      setExpression('cheering')
+      revertSoon(2000)
+    } else {
+      showBubble(getRandomMessage(dailyMessages).text)
+      setExpression('smile')
+      revertSoon(3000)
+    }
   }
 
-  function handleMouseDownCapture(e: React.MouseEvent) {
-    e.preventDefault()
-    e.stopPropagation() // keep Character's internal drag/click from firing
-    dragRef.current = {
-      active: true,
-      moved: false,
-      sx: e.clientX,
-      sy: e.clientY,
-      ox: posRef.current.x,
-      oy: posRef.current.y,
+  function handleDoubleClick() {
+    if (exprTimer.current) clearTimeout(exprTimer.current)
+    if (isTimerRunningRef.current) {
+      setExpression('cheering')
+      showBubble(getRandomMessage(focusCheeringMessages).text)
+      revertSoon(2000)
+    } else {
+      setExpression('smile')
+      const count = 3 + Math.floor(Math.random() * 3)
+      const newHearts: Heart[] = Array.from({ length: count }, (_, i) => ({
+        id: Date.now() + i,
+        x: (Math.random() - 0.5) * 80,
+        delay: Math.random() * 0.35,
+      }))
+      setHearts(newHearts)
+      if (heartTimer.current) clearTimeout(heartTimer.current)
+      heartTimer.current = setTimeout(() => setHearts([]), 1500)
+      revertSoon(3000)
     }
+  }
+
+  function handleLongPress() {
+    if (isTimerRunningRef.current) {
+      setExpression('sulky_focus_mode')
+      showBubble(sulkyFocusModeHoldMessage)
+    } else {
+      setExpression('sulky_daily_mode')
+      showBubble(getRandomMessage(sulkyMessages).text)
+    }
+  }
+
+  function handleLongPressRelease() {
+    if (isTimerRunningRef.current) {
+      setExpression('cheering')
+      showBubble(sulkyFocusModeReleaseMessage)
+      revertSoon(2000)
+    } else {
+      setExpression('smile')
+      showBubble(sulkyDailyReleaseMessage)
+      revertSoon(3000)
+    }
+  }
+
+  // 🏠 button — play the pop-out, then ask main to hide the window.
+  function handleReturnHome(e: React.MouseEvent) {
+    e.stopPropagation()
+    if (phase === 'leaving') return
+    setPhase('leaving')
+    window.setTimeout(() => window.ipcRenderer.send('overlay:enter-character'), LEAVE_MS)
   }
 
   if (!visible) return <div className={`overlay-app theme-${theme}`} />
@@ -236,23 +255,45 @@ export function OverlayApp() {
     <div className={`overlay-app theme-${theme}`}>
       <div
         ref={anchorRef}
-        className={`overlay-char-anchor${following ? ' is-following' : ''}`}
+        className="overlay-char-anchor"
         style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
-        onMouseDownCapture={handleMouseDownCapture}
-        onDoubleClick={handleReturnHome}
       >
         <div className={`overlay-char-fx phase-${phase}`}>
+          <button
+            ref={homeBtnRef}
+            className={`overlay-home-btn${phase === 'shown' ? ' is-ready' : ''}`}
+            style={{
+              transform: `translate(calc(-50% + ${charOffset.x}px), calc(-50% - 180px + ${charOffset.y}px))`,
+            }}
+            title="Send Yoonah back into the book"
+            aria-label="Send Yoonah home"
+            onClick={handleReturnHome}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            🏠
+          </button>
+          <SpeechBubble
+            message={bubbleMessage}
+            visible={bubbleVisible}
+            offsetX={charOffset.x}
+            offsetY={charOffset.y}
+          />
           <Character
             mode={mode}
             expression={expression}
             isTimerRunning={isTimerRunning}
-            onExpressionChange={setExpression}
-            onClick={() => {}}
-            onDoubleClick={() => {}}
-            onLongPress={() => {}}
-            onLongPressRelease={() => {}}
-            onOffsetChange={() => {}}
+            onExpressionChange={(expr) => {
+              if (expr === 'dragging_daily_mode') showBubble('where am I going?')
+              else if (expr === 'dragging_focus_mode') showBubble('Oops!')
+              setExpression(expr)
+            }}
+            onClick={handleClick}
+            onDoubleClick={handleDoubleClick}
+            onLongPress={handleLongPress}
+            onLongPressRelease={handleLongPressRelease}
+            onOffsetChange={(x, y) => setCharOffset({ x, y })}
           />
+          <HeartEffect hearts={hearts} offsetX={charOffset.x} offsetY={charOffset.y} />
         </div>
       </div>
     </div>

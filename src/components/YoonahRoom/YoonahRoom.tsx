@@ -310,11 +310,6 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
     })
   }
 
-  // 캐릭터가 나가 있는 동안 표정을 오버레이로 동기화
-  useEffect(() => {
-    if (isCharacterOut) window.ipcRenderer.send('overlay:set-expression', expression)
-  }, [expression, isCharacterOut])
-
   // 타이머 상태도 오버레이로 동기화
   useEffect(() => {
     if (isCharacterOut) window.ipcRenderer.send('overlay:set-timer', timerStatus === 'running')
@@ -505,7 +500,7 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
           <div className="character-away-note">
             <span className="away-emoji">🌿</span>
             <span className="away-title">Yoonah is out on your desktop</span>
-            <span className="away-hint">double-click her to call her back home</span>
+            <span className="away-hint">drag her anywhere · tap the 🏠 above her to call her home</span>
           </div>
         ) : (
           <>
