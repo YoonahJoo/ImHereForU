@@ -112,8 +112,35 @@ ipcMain.on('overlay:set-timer', (_, running) => {
 
 // Overlay asks to send the character back into the book (come home).
 ipcMain.on('overlay:enter-character', () => {
+  stopCursorPoll()
   overlayWin?.hide()
   win?.webContents.send('book:character-entered')
+})
+
+// ── IPC: cursor following (polled only while the overlay wants it) ────
+let cursorPoll: ReturnType<typeof setInterval> | null = null
+
+function startCursorPoll() {
+  if (cursorPoll) return
+  cursorPoll = setInterval(() => {
+    if (!overlayWin || overlayWin.isDestroyed()) return stopCursorPoll()
+    const pt = screen.getCursorScreenPoint()
+    const b = overlayWin.getBounds()
+    // Report the cursor in the overlay's client coordinates.
+    overlayWin.webContents.send('overlay:set-position', { x: pt.x - b.x, y: pt.y - b.y })
+  }, 100)
+}
+
+function stopCursorPoll() {
+  if (cursorPoll) {
+    clearInterval(cursorPoll)
+    cursorPoll = null
+  }
+}
+
+ipcMain.on('overlay:set-following', (_, on: boolean) => {
+  if (on) startCursorPoll()
+  else stopCursorPoll()
 })
 
 // ── IPC: book window keeps its own size control (unchanged) ───────────
@@ -123,6 +150,7 @@ ipcMain.on('resize-window', (_, { width, height }: { width: number; height: numb
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
+    stopCursorPoll()
     app.quit()
     win = null
     overlayWin = null

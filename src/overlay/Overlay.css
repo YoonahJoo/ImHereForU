@@ -32,3 +32,9 @@ body,
 .overlay-char-anchor .character-wrapper {
   pointer-events: auto;
 }
+
+/* While following the cursor, hint that she's "walking". */
+.overlay-char-anchor.is-following .character-wrapper {
+  cursor: grab;
+}
+
