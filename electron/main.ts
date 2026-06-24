@@ -161,4 +161,12 @@ app.on('activate', () => {
 app.whenReady().then(() => {
   createWindow()
   createOverlayWindow()
+
+  // The overlay is a utility window (focusable:false, skipTaskbar, alwaysOnTop)
+  // and can push the app into macOS "accessory" mode, which drops the Dock
+  // icon. Force a regular Dock presence so the app always shows in the Dock.
+  if (process.platform === 'darwin') {
+    app.setActivationPolicy('regular')
+    app.dock?.show()
+  }
 })
