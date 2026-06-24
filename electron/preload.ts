@@ -1,24 +1,26 @@
-import { ipcRenderer, contextBridge } from 'electron'
+import { ipcRenderer, contextBridge, type IpcRendererEvent } from 'electron'
 
-// --------- Expose some API to the Renderer process ---------
+type IpcListener = (event: IpcRendererEvent, ...args: unknown[]) => void
+
+// --------- Expose a small, typed IPC bridge to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {
-  on(...args: Parameters<typeof ipcRenderer.on>) {
-    const [channel, listener] = args
-    return ipcRenderer.on(channel, (event, ...args) => listener(event, ...args))
+  // `on` registers a wrapped listener and returns an unsubscribe function,
+  // so renderers can clean up reliably (the wrapper can't be matched by `off`).
+  on(channel: string, listener: IpcListener) {
+    const wrapped = (event: IpcRendererEvent, ...args: unknown[]) => listener(event, ...args)
+    ipcRenderer.on(channel, wrapped)
+    return () => {
+      ipcRenderer.removeListener(channel, wrapped)
+    }
   },
-  off(...args: Parameters<typeof ipcRenderer.off>) {
-    const [channel, ...omit] = args
-    return ipcRenderer.off(channel, ...omit)
+  off(channel: string, listener?: (...args: unknown[]) => void) {
+    if (listener) ipcRenderer.removeListener(channel, listener)
+    else ipcRenderer.removeAllListeners(channel)
   },
-  send(...args: Parameters<typeof ipcRenderer.send>) {
-    const [channel, ...omit] = args
-    return ipcRenderer.send(channel, ...omit)
+  send(channel: string, ...args: unknown[]) {
+    ipcRenderer.send(channel, ...args)
   },
-  invoke(...args: Parameters<typeof ipcRenderer.invoke>) {
-    const [channel, ...omit] = args
-    return ipcRenderer.invoke(channel, ...omit)
+  invoke(channel: string, ...args: unknown[]) {
+    return ipcRenderer.invoke(channel, ...args)
   },
-
-  // You can expose other APTs you need here.
-  // ...
 })

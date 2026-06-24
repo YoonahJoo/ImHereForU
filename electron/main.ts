@@ -55,6 +55,7 @@ function createOverlayWindow() {
     y,
     width,
     height,
+    show: false, // hidden until the character "steps out" of the book
     transparent: true,
     frame: false,
     resizable: false,
@@ -91,6 +92,28 @@ ipcMain.on('overlay:cursor-on-character', () => {
 })
 ipcMain.on('overlay:cursor-off-character', () => {
   overlayWin?.setIgnoreMouseEvents(true, { forward: true })
+})
+
+// ── IPC: book → overlay lifecycle + state sync ────────────────────────
+// Book asks the character to step out onto the desktop.
+ipcMain.on('book:exit-character', (_, payload) => {
+  if (!overlayWin) return
+  overlayWin.showInactive() // become visible without stealing focus
+  overlayWin.webContents.send('overlay:show', payload)
+})
+
+// Book relays expression / timer changes while the character is out.
+ipcMain.on('overlay:set-expression', (_, expr) => {
+  overlayWin?.webContents.send('overlay:set-expression', expr)
+})
+ipcMain.on('overlay:set-timer', (_, running) => {
+  overlayWin?.webContents.send('overlay:set-timer', running)
+})
+
+// Overlay asks to send the character back into the book (come home).
+ipcMain.on('overlay:enter-character', () => {
+  overlayWin?.hide()
+  win?.webContents.send('book:character-entered')
 })
 
 // ── IPC: book window keeps its own size control (unchanged) ───────────

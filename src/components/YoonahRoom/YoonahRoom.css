@@ -136,6 +136,67 @@
   filter: brightness(1.05);
 }
 
+/* ── v3.0: 데스크탑으로 나가기 버튼 ── */
+.step-out-btn {
+  position: absolute;
+  top: 8px;
+  right: 54px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  z-index: 10;
+  transition: transform 0.15s, filter 0.15s;
+}
+
+.step-out-btn:hover {
+  transform: scale(1.15);
+  filter: brightness(1.05);
+}
+
+/* ── v3.0: 캐릭터가 나가 있을 때 안내 ── */
+.character-away-note {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  padding: 0 16px;
+  color: rgba(90, 78, 64, 0.85);
+  font-family: 'Patrick Hand', cursive;
+  pointer-events: none;
+  user-select: none;
+}
+
+.theme-dark .character-away-note {
+  color: rgba(228, 222, 212, 0.85);
+}
+
+.character-away-note .away-emoji {
+  font-size: 40px;
+}
+
+.character-away-note .away-title {
+  font-size: 18px;
+}
+
+.character-away-note .away-hint {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
 /* ── Focus 타이머 창 ── */
 .focus-timer-window {
   position: absolute;

@@ -82,6 +82,8 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
   const [charOffset, setCharOffset] = useState({ x: 0, y: 0 })
   const [hasClickedChar, setHasClickedChar] = useState(false)
   const [timerPos, setTimerPos] = useState<{ x: number; y: number } | null>(null)
+  // v3.0: when true, the character has stepped out onto the desktop overlay.
+  const [isCharacterOut, setIsCharacterOut] = useState(false)
 
   const roomRef = useRef<HTMLDivElement>(null)
   const timerWindowRef = useRef<HTMLDivElement>(null)
@@ -296,6 +298,35 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
     }
   }
 
+  // ── v3.0: 데스크탑으로 나가기 / 귀가 ──────────────────────
+  function handleStepOut() {
+    if (isCharacterOut) return
+    setIsCharacterOut(true)
+    window.ipcRenderer.send('book:exit-character', {
+      expression,
+      isTimerRunning: timerStatus === 'running',
+      mode,
+    })
+  }
+
+  // 캐릭터가 나가 있는 동안 표정을 오버레이로 동기화
+  useEffect(() => {
+    if (isCharacterOut) window.ipcRenderer.send('overlay:set-expression', expression)
+  }, [expression, isCharacterOut])
+
+  // 타이머 상태도 오버레이로 동기화
+  useEffect(() => {
+    if (isCharacterOut) window.ipcRenderer.send('overlay:set-timer', timerStatus === 'running')
+  }, [timerStatus, isCharacterOut])
+
+  // 오버레이에서 귀가하면(더블클릭) 책 안 캐릭터를 다시 표시
+  useEffect(() => {
+    const off = window.ipcRenderer.on('book:character-entered', () => {
+      setIsCharacterOut(false)
+    })
+    return off
+  }, [])
+
   // ── 인터랙션 핸들러 ───────────────────────────────────────
   function handleClick() {
     // sleepy 상태에서 클릭 → 깨우기 처리 (일반 클릭 반응 생략)
@@ -450,30 +481,52 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
         <img src={settingsBtn} alt="" draggable={false} />
       </button>
 
+      {/* v3.0: 데스크탑으로 나가기 버튼 */}
+      {!isCharacterOut && (
+        <button
+          className="step-out-btn"
+          aria-label="Send Yoonah to your desktop"
+          title="Send Yoonah out onto your desktop"
+          onClick={handleStepOut}
+        >
+          🚪
+        </button>
+      )}
+
       {/* 캐릭터 스테이지 (왼쪽 페이지) */}
       <div className="room-stage">
-        <SpeechBubble message={bubbleMessage} visible={isBubbleVisible} offsetX={charOffset.x} offsetY={charOffset.y} />
-        <Character
-          mode={mode}
-          expression={expression}
-          isTimerRunning={timerStatus === 'running'}
-          onExpressionChange={(expr) => {
-            if (expr === 'dragging_daily_mode') showBubble('where am I going?')
-            else if (expr === 'dragging_focus_mode') showBubble('Oops!')
-            setExpression(expr)
-          }}
-          onClick={handleClick}
-          onDoubleClick={handleDoubleClick}
-          onLongPress={handleLongPress}
-          onLongPressRelease={handleLongPressRelease}
-          onOffsetChange={(x, y) => setCharOffset({ x, y })}
-        />
-        <HeartEffect hearts={hearts} offsetX={charOffset.x} offsetY={charOffset.y} />
-
-        {!isBubbleVisible && !hasClickedChar && (
-          <div className="character-hint">
-            {mode === 'daily' ? 'Click me!' : "Let's focus together"}
+        {isCharacterOut ? (
+          <div className="character-away-note">
+            <span className="away-emoji">🌿</span>
+            <span className="away-title">Yoonah is out on your desktop</span>
+            <span className="away-hint">double-click her to call her back home</span>
           </div>
+        ) : (
+          <>
+            <SpeechBubble message={bubbleMessage} visible={isBubbleVisible} offsetX={charOffset.x} offsetY={charOffset.y} />
+            <Character
+              mode={mode}
+              expression={expression}
+              isTimerRunning={timerStatus === 'running'}
+              onExpressionChange={(expr) => {
+                if (expr === 'dragging_daily_mode') showBubble('where am I going?')
+                else if (expr === 'dragging_focus_mode') showBubble('Oops!')
+                setExpression(expr)
+              }}
+              onClick={handleClick}
+              onDoubleClick={handleDoubleClick}
+              onLongPress={handleLongPress}
+              onLongPressRelease={handleLongPressRelease}
+              onOffsetChange={(x, y) => setCharOffset({ x, y })}
+            />
+            <HeartEffect hearts={hearts} offsetX={charOffset.x} offsetY={charOffset.y} />
+
+            {!isBubbleVisible && !hasClickedChar && (
+              <div className="character-hint">
+                {mode === 'daily' ? 'Click me!' : "Let's focus together"}
+              </div>
+            )}
+          </>
         )}
 
         {newGift && (
