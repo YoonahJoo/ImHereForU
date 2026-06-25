@@ -73,6 +73,11 @@ function createOverlayWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       devTools: true,
+      // This window is never focused (focusable:false), so Chromium would treat
+      // it as "background" and throttle JS timers — which froze setTimeout-based
+      // reverts (e.g. cheering → focus_mode) and bubble auto-hide. Keep timers
+      // running normally for the always-present companion.
+      backgroundThrottling: false,
     },
   })
 
