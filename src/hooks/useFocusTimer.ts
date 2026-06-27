@@ -21,6 +21,11 @@ export function useFocusTimer(
   const onCompleteRef = useRef(onComplete)
   useEffect(() => { onCompleteRef.current = onComplete })
 
+  // 설정 시간이 바뀌면(시작 전 idle 상태) 표시 시간도 동기화
+  useEffect(() => {
+    if (status === 'idle') setRemainingSeconds(totalSeconds)
+  }, [totalSeconds, status])
+
   function clearTimer() {
     if (intervalRef.current) {
       clearInterval(intervalRef.current)

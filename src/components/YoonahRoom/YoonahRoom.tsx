@@ -43,6 +43,7 @@ import explainDark1 from '../../assets/explain-dark-1.png'
 import explainDark2 from '../../assets/explain-dark-2.png'
 import explainDark3 from '../../assets/explain-dark-3.png'
 import frogExitBtn from '../../assets/frog-exit-button.png'
+import doorImg from '../../assets/door.png'
 import './YoonahRoom.css'
 
 const DEFAULT_SETTINGS: UserSettings = {
@@ -164,8 +165,9 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
   }
 
   // ── Focus 타이머 훅 ──────────────────────────────────────
+  const [focusMinutes, setFocusMinutes] = useState(25)
   const { status: timerStatus, remainingSeconds, start, pause, reset } =
-    useFocusTimer(25, handleFocusComplete)
+    useFocusTimer(focusMinutes, handleFocusComplete)
 
   // ── Focus 타이머 → 표정 동기화 ───────────────────────────
   useEffect(() => {
@@ -504,7 +506,7 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
           title="Send Yoonah out onto your desktop"
           onClick={handleStepOut}
         >
-          🚪
+          <img src={doorImg} alt="" draggable={false} />
         </button>
       )}
 
@@ -563,6 +565,8 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
           <FocusTimer
             status={timerStatus}
             remainingSeconds={remainingSeconds}
+            durationMinutes={focusMinutes}
+            onDurationChange={setFocusMinutes}
             onStart={start}
             onPause={pause}
             onReset={reset}

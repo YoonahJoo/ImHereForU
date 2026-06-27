@@ -23,6 +23,28 @@
   letter-spacing: 0.5px;
 }
 
+.timer-input {
+  width: 62px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1C100A;
+  letter-spacing: 1px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1.5px solid rgba(180, 165, 148, 0.7);
+  border-radius: 10px;
+  padding: 2px 4px;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.timer-input::-webkit-inner-spin-button,
+.timer-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .timer-controls {
   display: flex;
   gap: 6px;
@@ -48,6 +70,15 @@
 .timer-btn:hover {
   background: #6e5b48;
   transform: scale(1.1);
+}
+
+.timer-btn--set {
+  background: rgba(180, 165, 148, 0.5);
+  font-size: 14px;
+}
+
+.timer-btn--set:hover {
+  background: rgba(180, 165, 148, 0.85);
 }
 
 .timer-btn--reset {
