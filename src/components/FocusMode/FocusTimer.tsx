@@ -69,7 +69,7 @@ export function FocusTimer({
 
       <div className="timer-controls">
         {isEditing && canSet ? (
-          <button className="timer-btn timer-btn--set" onClick={confirmEditor} aria-label="Confirm">✓</button>
+          <button className="timer-btn timer-btn--set" onMouseDown={(e) => e.preventDefault()} onClick={confirmEditor} aria-label="Confirm">✓</button>
         ) : (
           <>
             {canSet && (
