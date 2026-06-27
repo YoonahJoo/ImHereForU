@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 
-const IDLE_TIMEOUT = 15 * 60 * 1000 // 15분
+const IDLE_TIMEOUT = 10 * 60 * 1000 // 10분
 
 interface UseIdleBehaviorResult {
   resetIdle: () => void

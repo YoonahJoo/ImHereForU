@@ -236,7 +236,7 @@ export function Character({
       longPressTimer.current = null
       setAnimClass('shaking')
       cbs.current.onLongPress()
-    }, 5000)
+    }, 3000)
   }
 
   const isFloat = expression === 'idle' && animClass === ''
