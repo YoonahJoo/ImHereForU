@@ -39,9 +39,11 @@ import settingsBtn from '../../assets/settings.png'
 import explainLight1 from '../../assets/explain-light-1.png'
 import explainLight2 from '../../assets/explain-light-2.png'
 import explainLight3 from '../../assets/explain-light-3.png'
+import explainLight4 from '../../assets/explain-light-4.png'
 import explainDark1 from '../../assets/explain-dark-1.png'
 import explainDark2 from '../../assets/explain-dark-2.png'
 import explainDark3 from '../../assets/explain-dark-3.png'
+import explainDark4 from '../../assets/explain-dark-4.png'
 import frogExitBtn from '../../assets/frog-exit-button.png'
 import doorImg from '../../assets/door.png'
 import './YoonahRoom.css'
@@ -576,8 +578,8 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
 
       {/* 온보딩 오버레이 */}
       {isOnboardingOpen && (() => {
-        const lightImgs = [explainLight1, explainLight2, explainLight3]
-        const darkImgs  = [explainDark1, explainDark2, explainDark3]
+        const lightImgs = [explainLight1, explainLight2, explainLight3, explainLight4]
+        const darkImgs  = [explainDark1, explainDark2, explainDark3, explainDark4]
         const imgs = previewTheme === 'dark' ? darkImgs : lightImgs
         return (
           <div className="onboarding-backdrop" onClick={() => setIsOnboardingOpen(false)}>
@@ -611,13 +613,15 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
                 />
               ))}
             </div>
-            <img
-              className="onboarding-frog-btn"
-              src={frogExitBtn}
-              alt="close"
-              draggable={false}
-              onClick={(e) => { e.stopPropagation(); setIsOnboardingOpen(false) }}
-            />
+            {onboardingPage === imgs.length - 1 && (
+              <img
+                className="onboarding-frog-btn"
+                src={frogExitBtn}
+                alt="close"
+                draggable={false}
+                onClick={(e) => { e.stopPropagation(); setIsOnboardingOpen(false) }}
+              />
+            )}
           </div>
         )
       })()}

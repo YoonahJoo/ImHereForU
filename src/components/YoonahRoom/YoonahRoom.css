@@ -442,18 +442,17 @@
 
 .onboarding-frog-btn {
   position: absolute;
-  left: 672px;
-  top: 462px;
-  width: 75.52px;
-  height: 64.75px;
-  transform: rotate(-16.74deg);
+  left: 523px;
+  top: 389px;
+  width: 78.4px;
+  height: 74.5px;
   cursor: pointer;
   -webkit-app-region: no-drag;
   transition: transform 0.15s, filter 0.15s;
 }
 
 .onboarding-frog-btn:hover {
-  transform: rotate(-16.74deg) scale(1.1);
+  transform: scale(1.1);
   filter: brightness(1.05);
 }
 
