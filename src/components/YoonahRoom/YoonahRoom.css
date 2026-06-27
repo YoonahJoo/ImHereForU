@@ -34,30 +34,30 @@
 }
 
 .sunflower-hit-top {
-  left: 223px;  /* 253 - 30 */
-  top: 47px;    /* 77 - 30 */
-  width: 155px; /* 95 + 60 */
-  height: 158px; /* 98 + 60 */
+  left: 250px;  /* 260 - 10, 왼쪽으로 살짝 */
+  top: 56px;    /* 46 + 10, 아래로 살짝 */
+  width: 177px; /* 117 + 60 */
+  height: 177px; /* 117 + 60 */
 }
 
 .sunflower-hit-bottom {
-  left: 160px;  /* 190 - 30 */
-  top: 427px;   /* 457 - 30 */
-  width: 168px; /* 108 + 60 */
-  height: 171px; /* 111 + 60 */
+  left: 148px;  /* 178 - 30 */
+  top: 366px;   /* 396 - 30 */
+  width: 186px; /* 126 + 60 */
+  height: 186px; /* 126 + 60 */
 }
 
 .asset-sunflower-top {
   position: absolute;
   left: 30px;
   top: 30px;
-  width: 95px;
-  height: 98px;
-  transform: rotate(175.87deg);
+  width: 117px;
+  height: 117px;
+  transform: rotate(-173.54deg);
 }
 
 .sunflower-hit-top:hover .asset-sunflower-top {
-  transform: rotate(175.87deg) scale(1.08);
+  transform: rotate(-173.54deg) scale(1.08);
   filter: brightness(1.05);
 }
 
@@ -65,8 +65,8 @@
   position: absolute;
   left: 30px;
   top: 30px;
-  width: 108px;
-  height: 111px;
+  width: 126px;
+  height: 126px;
 }
 
 .sunflower-hit-bottom:hover .asset-sunflower-bottom {
@@ -75,23 +75,23 @@
 }
 
 .asset-bouquet {
-  left: 711px;
-  top: 410px;
-  width: 82px;
-  height: 109px;
-  transform: rotate(-18.43deg);
+  left: 696px;
+  top: 353px;
+  width: 98px;
+  height: 98px;
+  transform: rotate(-3.17deg);
 }
 
 .asset-bouquet:hover {
-  transform: rotate(-18.43deg) scale(1.08);
+  transform: rotate(-3.17deg) scale(1.08);
   filter: brightness(1.05);
 }
 
 .asset-memo {
-  left: 565px;
+  left: 590px;
   top: 44px;
-  width: 146px;
-  height: 113px;
+  width: 126px;
+  height: 126px;
 }
 
 .asset-memo:hover {

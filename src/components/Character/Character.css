@@ -55,6 +55,7 @@
   display: block;
   pointer-events: none;
   -webkit-user-drag: none;
+  filter: brightness(1) contrast(0.92) saturate(0.96);  /* 책 에셋과 톤 맞춤 */
 }
 
 /* layerA: normal flow (sets wrapper height) */
