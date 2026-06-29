@@ -38,6 +38,10 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       devTools: true,
+      // 캐릭터가 책 밖으로 나가면 이 창을 hide() 한다. 숨겨진 창은 Chromium이
+      // "백그라운드"로 보고 JS 타이머(포커스 타이머의 setInterval)를 느리게 돌린다.
+      // 오버레이 창과 동일하게 스로틀링을 꺼 타이머가 정상 속도로 흐르게 한다.
+      backgroundThrottling: false,
     },
   })
 

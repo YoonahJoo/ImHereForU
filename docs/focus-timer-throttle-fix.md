@@ -1,9 +1,12 @@
 # 기획서 — 캐릭터를 책 밖으로 꺼내면 포커스 타이머가 느려지는 버그 수정
 
 **작성일**: 2026-06-26
+**재검증**: 2026-06-29 — 현재 코드 기준 줄 번호·원인 재확인 완료 (아래 표기 줄 번호 모두 일치)
 **상태**: 분석 완료 / 수정 승인 대기
 **관련 커밋**: `fd7636e fix(overlay): disable backgroundThrottling so JS timers run unfocused`
 **증상 보고**: 3:33 기준 23:17 남음 → 실제 10분 후(3:43) 확인 시 21:00 남음 (10분 동안 약 2:17만 감소 ≈ **4배 느림**)
+
+> **재검증 메모 (2026-06-29)**: `useFocusTimer.ts`의 `setInterval`은 현재 **39행**, `win?.hide()`는 `main.ts` **122행**, 책 창 `webPreferences`는 **38–41행**(여전히 `backgroundThrottling` 미설정), 오버레이의 `backgroundThrottling: false`는 **80행**으로 확인됨. 원인 진단은 변동 없음.
 
 ---
 
@@ -66,6 +69,34 @@ webPreferences: {
 
 - 관찰값: 실제 600초 동안 타이머는 137초만 감소 → 약 **23% 속도(≈4.4배 느림)**.
 - 1초마다 깎여야 할 카운트가 ~4.4초에 한 번꼴로만 깎인 것과 일치한다. → **스로틀링이 원인임을 정량적으로 뒷받침**.
+
+### 2-5. (2차 기여 요인) 캐릭터 CSS 필터 + 무한 애니메이션의 repaint 부하
+
+> ⚠️ **주의**: 이건 주 원인이 아니라 **악화 요인**이다. ①(스로틀링 끄기)만 적용해도 버그는 사라진다. 다만 스로틀링이 살아있는 동안 체감 끊김을 더 키운다.
+
+[`src/components/Character/Character.css:58`](../src/components/Character/Character.css)
+
+```css
+.char-img {
+  filter: brightness(1) contrast(0.92) saturate(0.96); /* 책 에셋과 톤 맞춤 */
+}
+```
+
+[`Character.css:95`](../src/components/Character/Character.css) — idle 상태에서 무한 반복되는 float 애니메이션
+
+```css
+.character-inner.float {
+  animation: float 3.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+```
+
+- `transform`/`opacity`는 GPU가 처리(=메인 스레드 안 건드림)하지만, `filter`는 **매 프레임 픽셀을 다시 그리는(repaint)** 작업이라 메인 스레드를 점유한다.
+- 여기에 `float` 무한 애니메이션이 겹치면 **매 프레임 필터 재계산**이 돌아 메인 스레드가 바빠진다.
+- 타이머 콜백(`setInterval`)도 같은 메인 스레드에서 실행되므로, 스로틀링으로 이미 드물어진 틱이 **더 밀릴(jank)** 수 있다.
+
+**비유**: 시계 초침(타이머)과 캐릭터 칠하기(필터 repaint)가 **한 명의 일꾼(메인 스레드)** 손에 맡겨져 있다. 칠하기가 끊임없이 일을 시키면, 가뜩이나 졸고 있는(스로틀링) 일꾼이 초침 밀기를 더 자주 깜빡한다.
+
+> **개선 아이디어(선택)**: 정적인 톤 보정이라면 빌드 시 이미지에 톤을 굽거나(에셋 자체 보정), 굳이 런타임 `filter`가 필요하면 `will-change`/별도 레이어 분리로 repaint 범위를 줄인다. 우선순위는 낮다(①·②가 끝나면 검토).
 
 ---
 
@@ -154,6 +185,7 @@ const start = () => {
 | 1순위 (필수) | 책 창 `backgroundThrottling: false` | `electron/main.ts` | 현재 버그 즉시 해결 |
 | 2순위 (권장) | 타이머 endTime 기준 재설계 | `src/hooks/useFocusTimer.ts` | 슬립/가림/드리프트까지 근본 해결 |
 | 3순위 (확인) | 완료 콜백 중복/지연 점검 | `useFocusTimer.ts` / `YoonahRoom.tsx` | 세션 종료 이벤트 정확성 |
+| 4순위 (선택) | 캐릭터 `filter` repaint 부하 완화 | `Character.css` | 끊김(jank) 체감 추가 개선, 주 원인 아님 |
 
 ---
 
