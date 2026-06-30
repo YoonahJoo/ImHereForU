@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import type { AppMode, Expression, GiftItem, Message, UserSettings } from '../../types'
 import type { Heart } from '../Character/HeartEffect'
-import { ModeToggle } from '../ModeToggle/ModeToggle'
 import { Character } from '../Character/Character'
 import { SpeechBubble } from '../Character/SpeechBubble'
 import { HeartEffect } from '../Character/HeartEffect'
