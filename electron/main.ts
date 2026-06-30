@@ -135,6 +135,12 @@ ipcMain.on('overlay:set-theme', (_, theme) => {
   overlayWin?.webContents.send('overlay:set-theme', theme)
 })
 
+// Book relays "focus session completed" so the desktop character can play the
+// same celebration (smile + congrats → gift-room hint) instead of just idling.
+ipcMain.on('overlay:focus-complete', (_, payload) => {
+  overlayWin?.webContents.send('overlay:focus-complete', payload)
+})
+
 // Overlay asks to send the character back into the book (come home):
 // reveal the book first (with the character settling in), then hide the overlay.
 ipcMain.on('overlay:enter-character', () => {

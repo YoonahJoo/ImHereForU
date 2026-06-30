@@ -21,6 +21,12 @@ interface ExitPayload {
   theme?: 'light' | 'dark'
 }
 
+interface FocusCompletePayload {
+  congratsText?: string
+}
+
+const GIFT_ROOM_HINT = 'If you wanna see what gift you got, check the gift room!'
+
 type FxPhase = 'enter' | 'shown' | 'leaving'
 const LEAVE_MS = 340 // matches the pop-out transition in Overlay.css
 const HIT_INSET = 0.18 // shrink the clickable box toward the visible body
@@ -56,6 +62,9 @@ export function OverlayApp() {
   const bubbleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const exprTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const heartTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Focus 완료 축하 연출 진행 중 표시 — set-timer(false)로 인한 idle 덮어쓰기 방지
+  const celebratingRef = useRef(false)
+  const completeStep2Timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     isTimerRunningRef.current = isTimerRunning
@@ -69,7 +78,15 @@ export function OverlayApp() {
   // Keep the resting pose in sync if the timer flips while she's out
   // (e.g. the focus session completes on the desktop).
   useEffect(() => {
-    setExpression(isTimerRunning ? 'focus_mode' : 'idle')
+    if (isTimerRunning) {
+      // 새 세션 시작 → 진행 중이던 축하 연출은 취소하고 집중 포즈로
+      celebratingRef.current = false
+      if (completeStep2Timer.current) clearTimeout(completeStep2Timer.current)
+      setExpression('focus_mode')
+    } else if (!celebratingRef.current) {
+      // 축하 연출 중에는 set-timer(false)가 와도 idle로 덮어쓰지 않는다
+      setExpression('idle')
+    }
   }, [isTimerRunning])
 
   function showBubble(message: string) {
@@ -82,6 +99,26 @@ export function OverlayApp() {
   function revertSoon(ms: number) {
     if (exprTimer.current) clearTimeout(exprTimer.current)
     exprTimer.current = setTimeout(() => setExpression(restExpression()), ms)
+  }
+
+  // Focus 완료 축하 연출 (책 안에서의 완료 연출을 데스크탑 버전으로 재생):
+  // smile + 축하 말풍선 → 2초 뒤 선물방 안내 말풍선 → 5초 뒤 idle 복귀.
+  function playFocusComplete(congratsText: string) {
+    if (exprTimer.current) clearTimeout(exprTimer.current)
+    if (completeStep2Timer.current) clearTimeout(completeStep2Timer.current)
+
+    celebratingRef.current = true
+    setExpression('smile')
+    showBubble(congratsText || 'You did a great job, sweet heart <3')
+
+    // 2초 뒤 두 번째 말풍선(선물방 안내)으로 교체
+    completeStep2Timer.current = setTimeout(() => showBubble(GIFT_ROOM_HINT), 2000)
+
+    // 5초 뒤 축하 연출 종료 → 현재 타이머 상태에 맞는 기본 포즈로 복귀
+    exprTimer.current = setTimeout(() => {
+      celebratingRef.current = false
+      setExpression(restExpression())
+    }, 5000)
   }
 
   // ── Hit-detection: pass-through toggles off only over the character or the
@@ -158,6 +195,10 @@ export function OverlayApp() {
     const offTimer = window.ipcRenderer.on('overlay:set-timer', (_e, running: boolean) =>
       setIsTimerRunning(running),
     )
+    const offComplete = window.ipcRenderer.on(
+      'overlay:focus-complete',
+      (_e, payload?: FocusCompletePayload) => playFocusComplete(payload?.congratsText ?? ''),
+    )
     const offTheme = window.ipcRenderer.on('overlay:set-theme', (_e, t: 'light' | 'dark') =>
       setTheme(t),
     )
@@ -165,8 +206,12 @@ export function OverlayApp() {
       offShow()
       offHide()
       offTimer()
+      offComplete()
       offTheme()
     }
+    // playFocusComplete만 의존성에서 제외 — 내부에서 ref/상태 setter만 쓰므로
+    // 첫 렌더 클로저로 호출해도 안전하다(구독은 1회만 등록).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Place her in the lower-right when she first steps out (and on resize).
@@ -195,6 +240,7 @@ export function OverlayApp() {
       if (bubbleTimer.current) clearTimeout(bubbleTimer.current)
       if (exprTimer.current) clearTimeout(exprTimer.current)
       if (heartTimer.current) clearTimeout(heartTimer.current)
+      if (completeStep2Timer.current) clearTimeout(completeStep2Timer.current)
     }
   }, [])
 

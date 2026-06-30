@@ -149,10 +149,17 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
 
   // ── Focus 완료 처리 ───────────────────────────────────────
   function handleFocusComplete() {
-    showBubble(getRandomMessage(completeMessages).text)
+    const congratsText = getRandomMessage(completeMessages).text
+    showBubble(congratsText)
     if (exprTimer.current) clearTimeout(exprTimer.current)
     setExpression('smile')
     exprTimer.current = setTimeout(() => setExpression('idle'), 5000)
+
+    // 캐릭터가 데스크탑(책 밖)에 나가 있으면, 오버레이에서도 축하 연출을
+    // 재생하도록 완료 신호를 보낸다. (선물 생성·저장은 아래에서 그대로 진행)
+    if (isCharacterOut) {
+      window.ipcRenderer.send('overlay:focus-complete', { congratsText })
+    }
 
     const gift = createGiftItem()
     setGifts(prev => {
