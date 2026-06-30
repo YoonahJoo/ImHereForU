@@ -55,11 +55,7 @@
   transform: translateY(1px);
 }
 
-.confirm-yes {
-  background: #f4c89a;
-  color: #4a2c12;
-}
-
+.confirm-yes,
 .confirm-no {
   background: rgba(255, 255, 255, 0.85);
   color: #6b5847;
@@ -71,6 +67,7 @@
   color: #f3ece2;
 }
 
+.theme-dark .confirm-yes,
 .theme-dark .confirm-no {
   background: rgba(90, 82, 74, 0.9);
   color: #efe6db;
