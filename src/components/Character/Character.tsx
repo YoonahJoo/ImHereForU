@@ -42,6 +42,10 @@ interface CharacterProps {
   onLongPress: () => void
   onLongPressRelease: () => void
   onOffsetChange: (x: number, y: number) => void
+  onRightClick?: () => void
+  // When true, left-click / double-click / long-press / drag are all blocked
+  // (e.g. while the overlay's "Want me to go back?" confirm bubble is open).
+  locked?: boolean
 }
 
 export function Character({
@@ -54,6 +58,8 @@ export function Character({
   onLongPress,
   onLongPressRelease,
   onOffsetChange,
+  onRightClick,
+  locked = false,
 }: CharacterProps) {
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const [isPressed, setIsPressed] = useState(false)
@@ -74,11 +80,13 @@ export function Character({
   // Stable callback refs
   const modeRef = useRef(mode)
   const isTimerRunningRef = useRef(isTimerRunning)
-  const cbs = useRef({ onClick, onDoubleClick, onLongPress, onLongPressRelease, onExpressionChange, onOffsetChange })
+  const lockedRef = useRef(locked)
+  const cbs = useRef({ onClick, onDoubleClick, onLongPress, onLongPressRelease, onExpressionChange, onOffsetChange, onRightClick })
   useEffect(() => {
     modeRef.current = mode
     isTimerRunningRef.current = isTimerRunning
-    cbs.current = { onClick, onDoubleClick, onLongPress, onLongPressRelease, onExpressionChange, onOffsetChange }
+    lockedRef.current = locked
+    cbs.current = { onClick, onDoubleClick, onLongPress, onLongPressRelease, onExpressionChange, onOffsetChange, onRightClick }
   })
 
   // Crossfade when expression changes
@@ -220,7 +228,14 @@ export function Character({
     }
   }, [])
 
+  function handleContextMenu(e: React.MouseEvent) {
+    e.preventDefault() // suppress the OS context menu
+    cbs.current.onRightClick?.()
+  }
+
   function handleMouseDown(e: React.MouseEvent) {
+    if (e.button === 2) return // right-click is handled via onContextMenu
+    if (lockedRef.current) return // confirm bubble open → ignore click/drag
     e.preventDefault()
     drag.current.active = true
     drag.current.moved = false
@@ -252,6 +267,7 @@ export function Character({
       ].filter(Boolean).join(' ')}
       style={{ transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))` }}
       onMouseDown={handleMouseDown}
+      onContextMenu={handleContextMenu}
     >
       <div className={['character-anim', animClass].filter(Boolean).join(' ')}>
         <div className={['character-inner', isFloat ? 'float' : '', isSway ? 'sway' : ''].filter(Boolean).join(' ')}>

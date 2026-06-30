@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { AppMode, Expression } from '../types'
 import { Character } from '../components/Character/Character'
 import { SpeechBubble } from '../components/Character/SpeechBubble'
+import { ConfirmBubble } from '../components/Character/ConfirmBubble'
 import { HeartEffect, type Heart } from '../components/Character/HeartEffect'
 import {
   dailyMessages,
@@ -26,6 +27,10 @@ interface FocusCompletePayload {
 }
 
 const GIFT_ROOM_HINT = 'If you wanna see what gift you got, check the gift room!'
+const GO_BACK_QUESTION = 'Want me to go back?'
+const BYE_MESSAGE = 'Bye babe!'
+const STAY_MESSAGE = 'I knew that you wanted to be w me more hehe'
+const CONFIRM_REPLY_MS = 2000 // yes/no 선택 후 표정·말풍선 유지 시간
 
 type FxPhase = 'enter' | 'shown' | 'leaving'
 const LEAVE_MS = 340 // matches the pop-out transition in Overlay.css
@@ -35,9 +40,10 @@ const HIT_INSET = 0.18 // shrink the clickable box toward the visible body
  * OverlayApp — renderer for the transparent, full-screen desktop-mate window.
  *
  * The desktop character stays where you drag her (no cursor-following) and
- * reacts to clicks just like she does inside the book. A 🏠 button above her
- * sends her home. Expression is owned locally so desktop interactions aren't
- * overridden by the book; only timer + theme are synced in.
+ * reacts to clicks just like she does inside the book. Right-clicking her opens
+ * a "Want me to go back?" yes/no bubble that sends her home. Expression is owned
+ * locally so desktop interactions aren't overridden by the book; only timer +
+ * theme are synced in.
  */
 export function OverlayApp() {
   const [visible, setVisible] = useState(false)
@@ -51,14 +57,22 @@ export function OverlayApp() {
   const [bubbleVisible, setBubbleVisible] = useState(false)
   const [hearts, setHearts] = useState<Heart[]>([])
   const [charOffset, setCharOffset] = useState({ x: 0, y: 0 })
+  // "Want me to go back?" yes/no 확인창 표시 여부
+  const [confirmOpen, setConfirmOpen] = useState(false)
   // Fixed anchor position (top-left of the 240px box). She stays here unless
   // dragged; dragging moves her via Character's own offset (charOffset).
   const [pos, setPos] = useState({ x: 0, y: 0 })
 
   const anchorRef = useRef<HTMLDivElement>(null)
-  const homeBtnRef = useRef<HTMLButtonElement>(null)
+  const confirmRef = useRef<HTMLDivElement>(null)
   const wasOverRef = useRef(false)
   const isTimerRunningRef = useRef(false)
+  const confirmOpenRef = useRef(false)
+  // 확인 플로우(질문창이 열린 시점 ~ yes/no 후 2초 연출이 끝날 때까지)가
+  // 진행 중인 동안 타이머가 끝나면 축하 연출을 보류했다가, 플로우가 끝난 뒤
+  // 실행한다. (보류할 축하 문구를 담아둠 / 없으면 null)
+  const confirmFlowRef = useRef(false)
+  const pendingCongratsRef = useRef<string | null>(null)
   const bubbleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const exprTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const heartTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -69,6 +83,10 @@ export function OverlayApp() {
   useEffect(() => {
     isTimerRunningRef.current = isTimerRunning
   }, [isTimerRunning])
+
+  useEffect(() => {
+    confirmOpenRef.current = confirmOpen
+  }, [confirmOpen])
 
   // Resting pose follows the actual focus-timer state: focus_mode while a
   // session runs, idle otherwise. (We don't inherit the book's transient
@@ -122,7 +140,8 @@ export function OverlayApp() {
   }
 
   // ── Hit-detection: pass-through toggles off only over the character or the
-  //    home button; frozen mid-press so a drag never loses its mouse stream ──
+  //    open confirm bubble; frozen mid-press so a drag never loses its mouse
+  //    stream ──
   useEffect(() => {
     let interacting = false
 
@@ -136,10 +155,11 @@ export function OverlayApp() {
         over =
           x >= cr.left + ix && x <= cr.right - ix && y >= cr.top + iy && y <= cr.bottom - iy
       }
-      if (!over) {
-        const hr = homeBtnRef.current?.getBoundingClientRect()
-        if (hr && hr.width > 0) {
-          over = x >= hr.left && x <= hr.right && y >= hr.top && y <= hr.bottom
+      // 확인창(yes/no)이 떠 있으면 그 영역도 인터랙티브로 쳐서 버튼이 눌리게 한다.
+      if (!over && confirmOpenRef.current && confirmRef.current) {
+        const br = confirmRef.current.getBoundingClientRect()
+        if (br && br.width > 0) {
+          over = x >= br.left && x <= br.right && y >= br.top && y <= br.bottom
         }
       }
       return over
@@ -187,6 +207,9 @@ export function OverlayApp() {
       setExpression(running ? 'focus_mode' : 'idle')
       if (payload?.theme) setTheme(payload.theme)
       setCharOffset({ x: 0, y: 0 })
+      setConfirmOpen(false) // 새로 나올 땐 확인창/보류 상태 초기화
+      confirmFlowRef.current = false
+      pendingCongratsRef.current = null
       wasOverRef.current = false // start fresh; not hovering until proven otherwise
       setPhase('enter') // restart the pop-in on every step-out
       setVisible(true)
@@ -197,7 +220,15 @@ export function OverlayApp() {
     )
     const offComplete = window.ipcRenderer.on(
       'overlay:focus-complete',
-      (_e, payload?: FocusCompletePayload) => playFocusComplete(payload?.congratsText ?? ''),
+      (_e, payload?: FocusCompletePayload) => {
+        const text = payload?.congratsText || 'You did a great job, sweet heart <3'
+        // 확인 플로우 진행 중이면 축하 연출을 보류 → 플로우 종료 후 실행.
+        if (confirmFlowRef.current) {
+          pendingCongratsRef.current = text
+        } else {
+          playFocusComplete(text)
+        }
+      },
     )
     const offTheme = window.ipcRenderer.on('overlay:set-theme', (_e, t: 'light' | 'dark') =>
       setTheme(t),
@@ -300,19 +331,70 @@ export function OverlayApp() {
     }
   }
 
-  // 🏠 button — play the pop-out, then ask main to hide the window.
+  // Play the pop-out, then ask main to hide the window (go home).
   // setVisible(false) unmounts Character so its internal drag offset resets;
   // otherwise the next step-out would show the bubble at offset 0 while the
   // character still sits at the old dragged offset (bubble appears detached
   // until the next drag re-syncs them).
-  function handleReturnHome(e: React.MouseEvent) {
-    e.stopPropagation()
+  // replayComplete: a focus session finished mid-confirm and the user chose
+  // yes — tell the book to play its in-book celebration after she's back in.
+  function goHome(replay?: { congratsText: string }) {
     if (phase === 'leaving') return
     setPhase('leaving')
     window.setTimeout(() => {
-      window.ipcRenderer.send('overlay:enter-character')
+      window.ipcRenderer.send(
+        'overlay:enter-character',
+        replay ? { replayComplete: true, congratsText: replay.congratsText } : undefined,
+      )
       setVisible(false)
     }, LEAVE_MS)
+  }
+
+  // Right-click on the character → open the "Want me to go back?" confirm.
+  function handleRightClick() {
+    if (confirmFlowRef.current || phase === 'leaving') return
+    if (bubbleTimer.current) clearTimeout(bubbleTimer.current)
+    setBubbleVisible(false) // hide any normal bubble so it doesn't clash
+    confirmFlowRef.current = true // defer any focus-complete until this resolves
+    setConfirmOpen(true)
+  }
+
+  // yes → smile/cheering + "Bye babe!" (2s), then head home. If a focus session
+  // finished during the flow, hand the deferred celebration to the book so it
+  // plays the in-book version once she's back inside.
+  function handleConfirmYes() {
+    setConfirmOpen(false)
+    if (exprTimer.current) clearTimeout(exprTimer.current)
+    if (completeStep2Timer.current) clearTimeout(completeStep2Timer.current)
+    setExpression(isTimerRunningRef.current ? 'cheering' : 'smile')
+    showBubble(BYE_MESSAGE)
+    exprTimer.current = setTimeout(() => {
+      confirmFlowRef.current = false
+      const pending = pendingCongratsRef.current
+      pendingCongratsRef.current = null
+      goHome(pending ? { congratsText: pending } : undefined)
+    }, CONFIRM_REPLY_MS)
+  }
+
+  // no → smile/cheering + stay message (2s), then back to resting pose. If a
+  // focus session finished during the flow, the deferred desktop celebration
+  // runs right after the stay message.
+  function handleConfirmNo() {
+    setConfirmOpen(false)
+    if (exprTimer.current) clearTimeout(exprTimer.current)
+    if (completeStep2Timer.current) clearTimeout(completeStep2Timer.current)
+    setExpression(isTimerRunningRef.current ? 'cheering' : 'smile')
+    showBubble(STAY_MESSAGE)
+    exprTimer.current = setTimeout(() => {
+      confirmFlowRef.current = false
+      const pending = pendingCongratsRef.current
+      pendingCongratsRef.current = null
+      if (pending) {
+        playFocusComplete(pending) // 보류했던 '책 밖' 선물 이벤트 실행
+      } else {
+        setExpression(restExpression())
+      }
+    }, CONFIRM_REPLY_MS)
   }
 
   if (!visible) return <div className={`overlay-app theme-${theme}`} />
@@ -325,29 +407,26 @@ export function OverlayApp() {
         style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
       >
         <div className={`overlay-char-fx phase-${phase}`}>
-          <button
-            ref={homeBtnRef}
-            className={`overlay-home-btn${phase === 'shown' ? ' is-ready' : ''}`}
-            style={{
-              transform: `translate(calc(-50% + ${charOffset.x}px), calc(-50% - 180px + ${charOffset.y}px))`,
-            }}
-            title="Send Yoonah back into the book"
-            aria-label="Send Yoonah home"
-            onClick={handleReturnHome}
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            🏠
-          </button>
           <SpeechBubble
             message={bubbleMessage}
-            visible={bubbleVisible}
+            visible={bubbleVisible && !confirmOpen}
             offsetX={charOffset.x}
             offsetY={charOffset.y}
+          />
+          <ConfirmBubble
+            ref={confirmRef}
+            message={GO_BACK_QUESTION}
+            visible={confirmOpen}
+            offsetX={charOffset.x}
+            offsetY={charOffset.y}
+            onYes={handleConfirmYes}
+            onNo={handleConfirmNo}
           />
           <Character
             mode={mode}
             expression={expression}
             isTimerRunning={isTimerRunning}
+            locked={confirmOpen}
             onExpressionChange={(expr) => {
               if (expr === 'dragging_daily_mode') showBubble('where am I going?')
               else if (expr === 'dragging_focus_mode') showBubble('Oops!')
@@ -358,6 +437,7 @@ export function OverlayApp() {
             onLongPress={handleLongPress}
             onLongPressRelease={handleLongPressRelease}
             onOffsetChange={(x, y) => setCharOffset({ x, y })}
+            onRightClick={handleRightClick}
           />
           <HeartEffect hearts={hearts} offsetX={charOffset.x} offsetY={charOffset.y} />
         </div>

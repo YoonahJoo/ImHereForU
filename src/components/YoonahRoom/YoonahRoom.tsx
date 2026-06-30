@@ -97,6 +97,8 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
   const bubbleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const exprTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const newGiftTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // 가장 최근 적립한 선물 — 책 밖에서 완료된 뒤 귀가(yes) 시 책 안 연출 재생용
+  const lastGiftRef = useRef<GiftItem | null>(null)
   const modeBlockTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const cheeringReturnTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const idlePromptTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -148,29 +150,41 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
   }
 
   // ── Focus 완료 처리 ───────────────────────────────────────
-  function handleFocusComplete() {
-    const congratsText = getRandomMessage(completeMessages).text
-    showBubble(congratsText)
-    if (exprTimer.current) clearTimeout(exprTimer.current)
-    setExpression('smile')
-    exprTimer.current = setTimeout(() => setExpression('idle'), 5000)
-
-    // 캐릭터가 데스크탑(책 밖)에 나가 있으면, 오버레이에서도 축하 연출을
-    // 재생하도록 완료 신호를 보낸다. (선물 생성·저장은 아래에서 그대로 진행)
-    if (isCharacterOut) {
-      window.ipcRenderer.send('overlay:focus-complete', { congratsText })
-    }
-
+  // 선물 1개 적립(데이터). 연출과 분리되어 완료 시 항상 1회만 호출된다.
+  function awardGift(): GiftItem {
     const gift = createGiftItem()
+    lastGiftRef.current = gift
     setGifts(prev => {
       const updated = [gift, ...prev]
       saveGifts(updated)
       return updated
     })
+    return gift
+  }
+
+  // 책 안 축하 연출: smile + 축하 말풍선 + 선물 알림 카드.
+  function playInsideCelebration(congratsText: string) {
+    showBubble(congratsText)
+    if (exprTimer.current) clearTimeout(exprTimer.current)
+    setExpression('smile')
+    exprTimer.current = setTimeout(() => setExpression('idle'), 5000)
 
     if (newGiftTimer.current) clearTimeout(newGiftTimer.current)
-    setNewGift(gift)
+    setNewGift(lastGiftRef.current)
     newGiftTimer.current = setTimeout(() => setNewGift(null), 4000)
+  }
+
+  function handleFocusComplete() {
+    const congratsText = getRandomMessage(completeMessages).text
+    awardGift() // 선물은 위치와 무관하게 즉시 1회 적립
+
+    if (isCharacterOut) {
+      // 캐릭터가 데스크탑에 있으면 — 오버레이가 yes/no 확인창 상태를 보고
+      // 언제·어디서 축하할지 결정한다. (책 안 연출은 여기서 실행하지 않음)
+      window.ipcRenderer.send('overlay:focus-complete', { congratsText })
+    } else {
+      playInsideCelebration(congratsText)
+    }
   }
 
   // ── Focus 타이머 훅 ──────────────────────────────────────
@@ -333,12 +347,22 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
     if (isCharacterOut) window.ipcRenderer.send('overlay:set-theme', previewTheme)
   }, [previewTheme, isCharacterOut])
 
-  // 오버레이에서 귀가하면 책 안 캐릭터를 다시 표시
+  // 오버레이에서 귀가하면 책 안 캐릭터를 다시 표시.
+  // replayComplete: 책 밖에서 타이머가 끝났는데 yes로 귀가한 경우 —
+  // 책 안으로 들어온 뒤 책 안 선물 이벤트를 재생한다.
   useEffect(() => {
-    const off = window.ipcRenderer.on('book:character-entered', () => {
-      setIsCharacterOut(false)
-    })
+    const off = window.ipcRenderer.on(
+      'book:character-entered',
+      (_e, payload?: { replayComplete?: boolean; congratsText?: string }) => {
+        setIsCharacterOut(false)
+        if (payload?.replayComplete) {
+          playInsideCelebration(payload.congratsText ?? getRandomMessage(completeMessages).text)
+        }
+      },
+    )
     return off
+    // playInsideCelebration은 ref/상태 setter만 사용 → 첫 렌더 클로저로 안전
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // 귀가 순간(나가있음 → 들어옴) 책 캐릭터가 쏙 들어오는 팝 모션

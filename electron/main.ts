@@ -143,12 +143,15 @@ ipcMain.on('overlay:focus-complete', (_, payload) => {
 
 // Overlay asks to send the character back into the book (come home):
 // reveal the book first (with the character settling in), then hide the overlay.
-ipcMain.on('overlay:enter-character', () => {
+ipcMain.on('overlay:enter-character', (_, payload) => {
   if (!win || win.isDestroyed()) {
     // The book was closed while she was out — reopen it so she has a home.
     createWindow()
   } else {
-    win.webContents.send('book:character-entered')
+    // payload carries { replayComplete, congratsText } when a focus session
+    // finished mid-confirm and the user chose yes — so the book can replay its
+    // in-book celebration once she's back inside.
+    win.webContents.send('book:character-entered', payload)
     win.show()
   }
   overlayWin?.hide()
