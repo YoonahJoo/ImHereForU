@@ -12,8 +12,12 @@ import {
   sulkyDailyReleaseMessage,
   sulkyFocusModeHoldMessage,
   sulkyFocusModeReleaseMessage,
+  idleMessages,
+  idleWakePromptMessage,
+  idleWakeResponseMessage,
   getRandomMessage,
 } from '../data/messages'
+import { useIdleBehavior } from '../hooks/useIdleBehavior'
 
 interface ExitPayload {
   expression?: Expression
@@ -76,6 +80,8 @@ export function OverlayApp() {
   const bubbleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const exprTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const heartTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // 방치 발동 후 3초 뒤 "click me if you wanna wake me up" 안내 말풍선 타이머
+  const idlePromptTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Focus 완료 축하 연출 진행 중 표시 — set-timer(false)로 인한 idle 덮어쓰기 방지
   const celebratingRef = useRef(false)
   const completeStep2Timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -119,6 +125,27 @@ export function OverlayApp() {
     exprTimer.current = setTimeout(() => setExpression(restExpression()), ms)
   }
 
+  // ── 방치(idle) 감지 — 책 밖(데스크탑)에 있는 동안엔 오버레이가 담당 ──
+  // 책 안 연출(YoonahRoom)과 동일한 훅·메시지·표정을 재사용한다.
+  const { resetIdle, pauseIdle } = useIdleBehavior(() => {
+    if (exprTimer.current) clearTimeout(exprTimer.current)
+    if (idlePromptTimer.current) clearTimeout(idlePromptTimer.current)
+    setExpression('sleepy')
+    showBubble(getRandomMessage(idleMessages).text)
+    // 첫 메시지(3초)가 사라진 직후 깨우기 안내 — 책 안 연출과 동일
+    idlePromptTimer.current = setTimeout(() => {
+      showBubble(idleWakePromptMessage)
+    }, 3000)
+  })
+
+  // 화면에 떠 있고(visible) 포커스 미실행일 때만 방치를 센다.
+  // 책 안으로 들어가 숨거나(!visible) 포커스 중이면 멈춘다. → 책/오버레이
+  // 중 항상 한 창만 방치를 세므로 중복 발동이 없다.
+  useEffect(() => {
+    if (!visible || isTimerRunning) pauseIdle()
+    else resetIdle()
+  }, [visible, isTimerRunning, pauseIdle, resetIdle])
+
   // Focus 완료 축하 연출 (책 안에서의 완료 연출을 데스크탑 버전으로 재생):
   // smile + 축하 말풍선 → 2초 뒤 선물방 안내 말풍선 → 5초 뒤 idle 복귀.
   function playFocusComplete(congratsText: string) {
@@ -126,6 +153,7 @@ export function OverlayApp() {
     if (completeStep2Timer.current) clearTimeout(completeStep2Timer.current)
 
     celebratingRef.current = true
+    pauseIdle() // 축하 연출 중엔 방치가 끼어들지 않게 정지
     setExpression('smile')
     showBubble(congratsText || 'You did a great job, sweet heart <3')
 
@@ -136,6 +164,7 @@ export function OverlayApp() {
     exprTimer.current = setTimeout(() => {
       celebratingRef.current = false
       setExpression(restExpression())
+      resetIdle() // 축하 끝났으니 방치 카운트 재시작
     }, 5000)
   }
 
@@ -204,6 +233,7 @@ export function OverlayApp() {
       // running, idle otherwise) — but ignore the book's transient expressions.
       const running = payload?.isTimerRunning === true
       setIsTimerRunning(running)
+      if (idlePromptTimer.current) clearTimeout(idlePromptTimer.current) // 직전 방치 잔여 정리
       setExpression(running ? 'focus_mode' : 'idle')
       if (payload?.theme) setTheme(payload.theme)
       setCharOffset({ x: 0, y: 0 })
@@ -272,11 +302,23 @@ export function OverlayApp() {
       if (exprTimer.current) clearTimeout(exprTimer.current)
       if (heartTimer.current) clearTimeout(heartTimer.current)
       if (completeStep2Timer.current) clearTimeout(completeStep2Timer.current)
+      if (idlePromptTimer.current) clearTimeout(idlePromptTimer.current)
     }
   }, [])
 
   // ── Interactions — same vibe as the book ──────────────────────────────
   function handleClick() {
+    // sleepy 상태에서 클릭 → 깨우기 (일반 클릭 반응 생략) — 책 안 연출과 동일
+    if (expression === 'sleepy') {
+      if (idlePromptTimer.current) clearTimeout(idlePromptTimer.current)
+      if (exprTimer.current) clearTimeout(exprTimer.current)
+      setExpression('smile')
+      showBubble(idleWakeResponseMessage)
+      revertSoon(3000)
+      resetIdle() // 방치 사이클 재시작
+      return
+    }
+    resetIdle() // 상호작용했으니 방치 카운트 리셋
     if (isTimerRunningRef.current) {
       showBubble(getRandomMessage(focusMessages).text)
       setExpression('cheering')
@@ -289,6 +331,7 @@ export function OverlayApp() {
   }
 
   function handleDoubleClick() {
+    resetIdle() // 상호작용했으니 방치 카운트 리셋
     if (exprTimer.current) clearTimeout(exprTimer.current)
     if (isTimerRunningRef.current) {
       setExpression('cheering')
@@ -310,6 +353,7 @@ export function OverlayApp() {
   }
 
   function handleLongPress() {
+    resetIdle() // 상호작용했으니 방치 카운트 리셋
     if (isTimerRunningRef.current) {
       setExpression('sulky_focus_mode')
       showBubble(sulkyFocusModeHoldMessage)
@@ -353,6 +397,7 @@ export function OverlayApp() {
   // Right-click on the character → open the "Want me to go back?" confirm.
   function handleRightClick() {
     if (confirmFlowRef.current || phase === 'leaving') return
+    resetIdle() // 상호작용했으니 방치 카운트 리셋
     if (bubbleTimer.current) clearTimeout(bubbleTimer.current)
     setBubbleVisible(false) // hide any normal bubble so it doesn't clash
     confirmFlowRef.current = true // defer any focus-complete until this resolves
@@ -393,6 +438,7 @@ export function OverlayApp() {
         playFocusComplete(pending) // 보류했던 '책 밖' 선물 이벤트 실행
       } else {
         setExpression(restExpression())
+        resetIdle() // 머무르기로 했으니 방치 카운트 재시작
       }
     }, CONFIRM_REPLY_MS)
   }
@@ -430,6 +476,7 @@ export function OverlayApp() {
             onExpressionChange={(expr) => {
               if (expr === 'dragging_daily_mode') showBubble('where am I going?')
               else if (expr === 'dragging_focus_mode') showBubble('Oops!')
+              resetIdle() // 드래그도 상호작용 → 방치 카운트 리셋
               setExpression(expr)
             }}
             onClick={handleClick}

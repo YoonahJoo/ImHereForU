@@ -278,13 +278,15 @@ export function YoonahRoom({ mode, onModeChange }: YoonahRoomProps) {
 
   // Focus 타이머 실행 중에는 idle 타이머 정지, 그 외엔 재시작
   // → 타이머가 running 중에 만료되어 영구 소멸하는 버그 방지
+  // 캐릭터가 책 밖(데스크탑)에 있을 때도 정지한다 — 그 동안은 오버레이가
+  // 자체 방치를 담당하고, 귀가하면(isCharacterOut=false) 여기서 깨끗하게 재시작된다.
   useEffect(() => {
-    if (timerStatus === 'running') {
+    if (timerStatus === 'running' || isCharacterOut) {
       pauseIdle()
     } else {
       resetIdle()
     }
-  }, [timerStatus, pauseIdle, resetIdle])
+  }, [timerStatus, isCharacterOut, pauseIdle, resetIdle])
 
   // ── modeBlockTimer 언마운트 클린업 ──────────────────────────
   useEffect(() => () => {
