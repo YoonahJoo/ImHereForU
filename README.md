@@ -74,18 +74,27 @@ npm run build
 
 ## 현재 상태
 
-**v2.0 구현 완료** (2026-06-22)
+**v2.0.0 배포 완료** — macOS `.dmg` 패키징(electron-builder) 후 GitHub Releases 공개.  
+책 안 세계관부터 캐릭터가 책 밖으로 나오는 **데스크탑 메이트**까지 완성했다.
 
-- 책 세계관 UI (투명 프레임리스 창, 책 펼치기 인트로 애니메이션)
-- 캐릭터 표정 시스템 12종 + crossfade 전환
-- Focus 타이머 (25분 포모도로, 드래그 이동 가능)
-- GiftRoom / Settings 패널 (blur backdrop + floating)
-- 온보딩 캐러셀 3페이지
-- 라이트 / 다크 테마
-- 시간대별 시작 인삿말 (morning / afternoon / evening / night / dawn)
+**책 안 (책 세계관 UI)**
 
-**v3.0 작업 예정** — 캐릭터가 책 밖으로 나와 데스크탑 전체에서 활동하는 "데스크탑 메이트" 확장.  
-확장 계획 전체는 [`docs/v3.0-plan.md`](docs/v3.0-plan.md)에 정리되어 있다.
+- 투명 프레임리스 창 + 책 펼치기 인트로 애니메이션
+- 캐릭터 표정 12종 + crossfade 전환
+- Focus 타이머 (시간 직접 설정, 드래그 이동 가능)
+- GiftRoom / Settings 패널 (blur backdrop + floating), 온보딩 캐러셀
+- 라이트 / 다크 테마, 시간대별 시작 인삿말, 15분 방치 감지
+
+**책 밖 (데스크탑 메이트)** — v3.0 기획의 핵심 "책 밖으로 꺼내기"를 완성해 v2.0.0으로 배포
+
+- 캐릭터를 책 밖 데스크탑으로 꺼냄 — **전체화면 투명 오버레이 창** 생성, `setIgnoreMouseEvents(true, {forward:true})`로 **마우스 통과** 처리해 아래 앱 클릭은 그대로 유지
+- 책 창 ↔ 오버레이 창을 **IPC로 연결**해 상태 동기화 (Focus 타이머·테마·완료 연출·표정 포즈)
+- 데스크탑에서 **드래그로 원하는 위치 고정** + 클릭·더블클릭·롱프레스·방치 등 책 안과 동일한 인터랙션
+- **우클릭으로 귀가**(책으로 복귀), 책 밖에서도 Focus 완료 축하 / 방치(idle) 연출 재생
+- 멀티모니터에서 **활성 디스플레이에 배치**, 책으로 돌아올 때 pop 트랜지션
+- 트러블슈팅: 책을 숨기면 Chromium 백그라운드 스로틀링으로 타이머가 약 4배 느려지던 문제를 `backgroundThrottling: false` + **종료 시각 기준 재계산**으로 정상화
+
+> v3.0 기획 중 "책 밖으로 꺼내기"까지 구현해 **v2.0.0**으로 배포했고, 그 밖의 확장(파트너 매칭·편지·실시간 대화 등)은 [`docs/future_plan.md`](docs/future_plan.md)의 로드맵에 정리되어 있다.
 
 ---
 
@@ -94,8 +103,8 @@ npm run build
 | 파일 | 내용 |
 |---|---|
 | [`docs/PRD.md`](docs/PRD.md) | 프로젝트 기획서 |
+| [`docs/future_plan.md`](docs/future_plan.md) | 향후 확장 로드맵 (매칭·편지·실시간 대화 + 수익화) |
 | [`docs/design-journey.md`](docs/design-journey.md) | 버전별 디자인 결정 과정 |
 | [`docs/tech-stack.md`](docs/tech-stack.md) | 기술 스택 상세 |
-| [`docs/v3.0-plan.md`](docs/v3.0-plan.md) | v3.0 확장 계획 및 기술 설계 |
+| [`docs/v3.0-plan.md`](docs/v3.0-plan.md) | 데스크탑 메이트(책 밖 확장) 기술 설계 |
 | [`docs/history.md`](docs/history.md) | 개발 히스토리 |
-| [`docs/work.md`](docs/work.md) | 작업 현황 |
